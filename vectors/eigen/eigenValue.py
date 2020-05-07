@@ -28,4 +28,4 @@ class eigenValue(field):
         self.info = getattr(obj, 'info', None)
 
     def hz(self):
-        return self /( 2 * np.pi)
+        return self /(2 * np.pi)

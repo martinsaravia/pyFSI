@@ -39,10 +39,10 @@ class eigenSystemVector(object):
 
     def calculate(self):
         dict = self.dict()
-        mesh = self.vMatrix[0].mesh() # Reference to the mesh fron any eigenvector
+        mesh = self.vMatrix[0].mesh()  # Reference to the mesh fron any eigenvector
         # Calculate integrals
         if not self.calculated:
-            self.vix = np.empty(dict['size'], dtype=object) # vector of indefinite integrals
+            self.vix = np.empty(dict['size'], dtype=object)  # vector of indefinite integrals
             self.viL = np.empty(dict['size'])
             self.N   = np.empty((dict['size'], dict['size']), dtype=object)
             for i in range(0, dict['size']):

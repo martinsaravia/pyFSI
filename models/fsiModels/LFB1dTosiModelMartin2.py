@@ -1,8 +1,11 @@
+# Change the system matrix.
+# Corrected the position of G, Small acceleration and changed the sign of Tb
+
 import numpy as np, scipy.integrate as si
 from vectors.eigen import eigenSystem as es
 # from vectors.eigen import eigenVector as evec
 # from vectors.eigen import eigenSystem as esys
-
+import copy
 class LFB1dTosi(object):
 
     def __repr__(self):
@@ -10,8 +13,14 @@ class LFB1dTosi(object):
 
     def __init__(self, control, beam, fluid):
 
+        # Time and parametric info
+        self.ti = control['time']['ti']
+        self.pi = control['parameters']['pi']
+
+        # Store the beam and fluid objects
         self.beam = beam
         self.fluid = fluid
+
         # Size of the state-space eigen matrix
         self._size = beam.eigen()()['size'] * 2 + 2
 
@@ -65,16 +74,18 @@ class LFB1dTosi(object):
         self.Et = np.zeros(esize)
         self.Gt = fluid.Gq()['channelTop']
         self.Gb = fluid.Gq()['channelBot']
+
         for i in range(0, esize):
             gi = beam.eigen().v()[i]
-            self.Tt[i] = -si.simps(fluid.Tf()['channelTop'] * gi, beam.mesh().x())
-            self.Tb[i] = si.simps(fluid.Tf()['channelBot'] * gi, beam.mesh().x())
+            self.Tt[i] = si.simps(fluid.Tf()['channelTop'] * gi, beam.mesh().x())
+            self.Tb[i] = si.simps(fluid.Tf()['channelBot'] * gi, beam.mesh().x())  # Changed the sign
 
             self.Bt[i] = si.simps(fluid.Bq()['channelTop'] * gi, beam.mesh().x())
             self.Bb[i] = si.simps(fluid.Bq()['channelBot'] * gi, beam.mesh().x())
 
             self.Dt[i] = si.simps(fluid.Dq()['channelTop'] * gi, beam.mesh().x())
             self.Db[i] = si.simps(fluid.Dq()['channelBot'] * gi, beam.mesh().x())
+
             self.Et[i] = si.simps(fluid.Eq()['channelTop'] * gi, beam.mesh().x())
             self.Eb[i] = si.simps(fluid.Eq()['channelBot'] * gi, beam.mesh().x())
 
@@ -88,17 +99,15 @@ class LFB1dTosi(object):
         S[esize:2*esize, 0:esize] = np.dot(Mi, self.K)
         S[esize:2*esize, esize:2*esize] = np.dot(Mi, self.C)
         S[esize:2*esize, 2*esize] = np.dot(Mi, self.Tb)
-        S[esize:2*esize, 2*esize+1] = np.dot(Mi, self.Tt)
+        S[esize:2*esize, 2*esize+1] = -np.dot(Mi, self.Tt)
 
-        S[2*esize, 0:esize] = -(self.Eb + np.dot(self.Bb, np.dot(Mi, self.K)))
-        S[2*esize, esize:2*esize] = -(self.Db + np.dot(self.Bb, np.dot(Mi, self.C)))
-        S[2*esize, 2*esize] = -np.dot(self.Bb, np.dot(Mi, self.Tb))
-        S[2*esize, 2*esize+1] = self.Gb - np.dot(self.Bb, np.dot(Mi, self.Tt))
+        S[2*esize, 0:esize] = -self.Eb
+        S[2*esize, esize:2*esize] = -self.Db
+        S[2*esize, 2*esize] = self.Gb
 
-        S[2*esize+1, 0:esize] = self.Et + np.dot(self.Bt, np.dot(Mi, self.K))
-        S[2*esize+1, esize:2*esize] = self.Dt + np.dot(self.Bt, np.dot(Mi, self.C))
-        S[2*esize+1, 2*esize] = self.Gt + np.dot(self.Bt, np.dot(Mi, self.Tb))
-        S[2*esize+1, 2*esize+1] = np.dot(self.Bt, np.dot(Mi, self.Tt))
+        S[2*esize+1, 0:esize] = self.Et
+        S[2*esize+1, esize:2*esize] = self.Dt
+        S[2*esize+1, 2*esize+1] = self.Gt
 
         self.S = S
 
@@ -113,7 +122,7 @@ class LFB1dTosi(object):
         evalues, evectors = np.linalg.eig(self.S)
 
         # Create an eigensystem object
-        self._ES  = es.eigenSystem(evalues, evectors, sort=False)
+        self._ES  = es.eigenSystem(evalues, evectors, sort=True)
 
     # Get the eigensystem
     def eigen(self):

@@ -6,7 +6,7 @@ class fsiMesh1D(object):
         return 'fsiMesh1D '
 
     def __init__(self, input, name='None', x=None):
-        print('--> Creating ' + self.__repr__())
+        #print('--> Creating ' + self.__repr__())
         self.__name = name
         self.__x = x
         self.__dim = len(self.__x)

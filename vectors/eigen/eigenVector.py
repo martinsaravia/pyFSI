@@ -10,26 +10,21 @@ class eigenVector(field):
         # Input array is an already formed ndarray instance
         # We first cast to be our class type
 
-
-
         # Normalization
         if normalize:
-            #print("---> Normalizing eigenvector...")
             factor = abs((mesh.x()[-1]-mesh.x()[0]))**0.5
+            obj = np.asarray(nparray).view(cls) / factor
         else:
-            factor = 1
-
-        obj = np.asarray(nparray).view(cls) / factor
-
+            obj = np.asarray(nparray).view(cls)
 
         obj.__mesh = mesh
 
-            # obj = obj / max([obj.max(), obj.min()], key=abs)
+        # obj = obj / max([obj.max(), obj.min()], key=abs)
 
         # add the new attribute to the created instance
         obj.info = info
 
-        # Attemtp using mirrrored ghost boundary (does not work)
+        # Attemtp using mirrored ghost boundary (does not work)
         # temp = np.zeros(obj.size + 3)
         # temp[3:] = obj
         # temp[2] = obj[1]
@@ -59,7 +54,8 @@ class eigenVector(field):
 
     def __array_finalize__(self, obj):
         # see InfoArray.__array_finalize__ for comments
-        if obj is None: return
+        if obj is None:
+            return
         self.info = getattr(obj, 'info', None)
 
     # Getters
@@ -77,32 +73,3 @@ class eigenVector(field):
 
     def d4(self):
         return self.__d4
-
-    # def i1i(self):
-    #     return self.__i1i
-    #
-    # def i1d(self):
-    #     return self.__i1d
-
-    # Operators
-    # def __mul__(self, other):
-    #     return eigenVector(self[:] * other[:])
-
-
-# class eigenVector(field):
-#     def __new__(cls, field):
-#         # shape = (dim,)
-#         obj = field
-#         return obj
-#
-#     def __init__(self):
-#         print('verga')
-#         self.d1 = np.gradient(self)
-
-    # @property
-    # def d1(self):
-    #     return self._d1
-    #
-    # @d1.setter
-    # def d1(self):
-    #     self._d1 = np.gradient(self.view())

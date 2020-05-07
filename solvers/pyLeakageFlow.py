@@ -9,7 +9,7 @@ from mesh.region.boundary1DBeam import *
 from models.solidModels.bernoulliEulerBeamModel.bernoulliEulerBeam import *
 from models.solidModels.calculixSolidModel.calculixSolidModel import *
 from models.fluidModels.leakageFlow2DModel.leakageFlow2D import *
-from models.fsiModels.LFB1dTosiModel import LFB1dTosi
+from models.fsiModels.LFB1dTosiModelMartin2 import LFB1dTosi
 
 # Main function of the solver
 def solve(caseDict):
@@ -50,10 +50,11 @@ def solve(caseDict):
     if caseDict['flow']['bc']['type'] == 'variableInletFlowRate':
         inlet = caseDict['flow']['bc']['inlet']
         # Flow rate as a function of pseudo-time
-        Qt = inlet['Qi'] + time['f'] * (inlet['Qf'] - inlet['Qi'])
-        for i, q in enumerate(time['f']):
+        for t in time['t']:
+            #print("--> Running for time: " + str(t))
             # Modify the inlet velocity before creating the object
-            inlet['Qt'] = Qt[i]
+            time['ti'] = t
+            inlet['Qt'] = inlet['Qi'] + time['ti'] * (inlet['Qf'] - inlet['Qi'])
             # Create the flow object
             flow = leakageFlow2D(
                     control,

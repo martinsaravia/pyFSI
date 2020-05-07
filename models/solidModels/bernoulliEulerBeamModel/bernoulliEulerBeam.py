@@ -1,14 +1,14 @@
-#---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------- #
 #    p    #     version: 0.0
 #    y    #     date: 20/03/2020
 #    F    #     author: Martin Saravia
 #    S    #     description: BE Beam class
 #    I    #     return: solidModel object
-#---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------- #
 # Notes:
 #   The class  works either eith an analytical model or with a calculix model
 #   The model type is selected from the key "method" in the solid-solution dict
-#---------------------------------------------------------------------------#
+# --------------------------------------------------------------------------- #
 
 import numpy as np
 from scipy import interpolate
@@ -26,21 +26,24 @@ class beamModel(solidModel):
 
     def __init__(self, control, mesh, dict, name='NN'):
         if control['debug'] == "y":
-            print("----------------------" + self.__repr__() + " messages... ----------------------")
-            print( "--> Warning: modal damping is equal for every mode...")
-            print("--------------------------------------------------------------------------------")
+            print("----------------------" + self.__repr__()
+                  + " messages... ----------------------")
+            print("--> Warning: modal damping is equal for every mode...")
+            print("--------------------------------------------------------"
+                  "------------------------")
 
         super(beamModel, self).__init__(control, mesh, dict, name='NN')
 
         # Kinematics
-        self._y = np.zeros(len(mesh.x())) # Initial y set to zero
+        self._y = np.zeros(len(mesh.x()))  # Initial y set to zero
         self.xi = mesh.x()[0]   # Initial position
         self.xf = mesh.x()[-1]  # Final position
         self.L = self.xf - self.xi
 
         # Add calculated parameters to the input dictionary
-        dict['L'] = self.L # Add the length to the parameters dictionary
-        dict['I'] = dict['section']['b'] * dict['section']['h']**3 / 12
+        dict['L'] = self.L  # Add the length to the parameters dictionary
+        dict['I'] = (dict['section']['b'] * dict['section']['h']**3
+                     / (12.0 * (1.0 - dict['material']['nu']**2)))
         dict['A'] = dict['section']['b'] * dict['section']['h']
         dict['m'] = dict['A'] * dict['material']['rho']
 
@@ -48,18 +51,19 @@ class beamModel(solidModel):
         if dict['solution']['type'] == 'modal':
             if dict['solution']['method'] == 'analytic':
                 self._ES = self._analyticEigenSystem(dict['solution']['modes'])
-            if dict['solution']['method'] == 'calculix':
+            elif dict['solution']['method'] == 'calculix':
                 self._ES = self._calculixEigenSystem(dict['solution']['modes'])
             else:
-                print( "--> ERROR: Beam solution method " + dict['solution']['method'] + " not kwnown !")
+                print("--> ERROR: Beam solution method " +
+                      dict['solution']['method']
+                      + " not kwnown !")
 
-            self._setBC(dict['bc']['type'], self._ES) # Impose the boundary condition
+            self._setBC(dict['bc']['type'], self._ES)  # Impose the boundary condition
 
             self._ES.calculate() # Calculate integrals
 
         else:
-            print( "--> ERROR: Beam solution method " + dict['solution']['type'] + " not kwnown !")
-
+            print("--> ERROR: Beam solution type " + dict['solution']['type'] + " not kwnown !")
 
     def M(self):
         return self._dict['m'] * self._ES.v()
@@ -67,15 +71,13 @@ class beamModel(solidModel):
     def C(self):
         damp = np.empty(len(self._ES.values()), dtype=object)
         for i, val in enumerate(damp):
-            damp[i]  = self._dict['solution']['damping'] * self._ES.values()[i] * self._ES.v()[i]
-        return  self._dict['m'] * damp
+            damp[i] = self._dict['solution']['damping'] * self._ES.values()[i] * self._ES.v()[i]
+        return self._dict['m'] * damp
 
     def K(self):
         return self._dict['material']['E'] * self._dict['I'] * self._ES.d4()
 
-
     # Private functions
-
     def _analyticEigenSystem(self, nmodes):
         # Aliases
         mesh = self._mesh
@@ -98,11 +100,8 @@ class beamModel(solidModel):
             cc = ( (pars['material']['E'] * pars["I"]) / (pars['material']['rho'] * pars["A"]) )**0.5
             values.append(eval.eigenValue(beta[i]**2 * cc))
             # Eigenvectors
-            vectors.append(evec.eigenVector(
-                vector(mesh.x(), beta[i]),
-                mesh,
-                info="Beam eigenvector " + str(i+1),
-                normalize=True) )
+            vectors.append(evec.eigenVector(vector(mesh.x(), beta[i]), mesh, info="Beam eigenvector " + str(i+1), normalize=False))
+
 
         # Create the eigensystem
         eigenSystem = esys.eigenSystemVector(values, vectors, self._name)
@@ -130,7 +129,7 @@ class beamModel(solidModel):
                 es.setD3(-1, i, 0.0)
                 # Correct the third derivative
                 itpobj = interpolate.interp1d(mesh.x()[3:],es.d3()[i][3:], fill_value='extrapolate')
-                es.setD3(range(0,3), i, itpobj(mesh.x()[0:3]))
+                es.setD3(range(0, 3), i, itpobj(mesh.x()[0:3]))
                 # Correct the fourth derivative
                 itpobj = interpolate.interp1d(mesh.x()[4:-4],es.d4()[i][4:-4], fill_value='extrapolate')
                 es.setD4(range(0,4), i, itpobj(mesh.x()[0:4]))
@@ -166,7 +165,6 @@ class beamModel(solidModel):
         # Filter and sort
         freqv = [item*self.L for item in freqv if item >= 0]
         freqv.sort()
-        print(freqv)
 
 
     def charEqn(self, beta):
@@ -182,10 +180,10 @@ class beamModel(solidModel):
         return self._y
 
     def ytop(self):
-        return self._y + self._dict['section']['h'] / 2.0
+        return self._y + 0.5 * self._dict['section']['h']
 
     def ybot(self):
-        return self._y - self._dict['section']['h'] / 2.0
+        return self._y - 0.5 * self._dict['section']['h']
 
     def eigen(self):
         return self._ES

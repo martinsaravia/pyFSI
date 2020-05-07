@@ -15,11 +15,18 @@ from vectors.eigen import eigenValue, eigenVector
 
 class eigenSystem(object):
 
-    def __init__(self, evalues=[], evectors=[]):
+    def __init__(self, evalues=[], evectors=[], sort=False):
         self._eigen = []
-        # Add values and vector to the eigensystem
-        for i, val in enumerate(evalues):
-            self.add(evalues[i], evectors[i])
+
+        # Sort in ascending order of the eigenvalues imaginary part
+        if sort is True:
+            idx = np.imag(evalues).argsort()[::1]
+            for i, val in enumerate(evalues):
+                self.add(evalues[idx[i]], evectors[idx[i]])
+        # Not sorted
+        else:
+            for i, val in enumerate(evalues):
+                self.add(evalues[i], evectors[i])
 
     # main function for adding values a vectors
     def add(self, evalue, evector):
@@ -42,3 +49,6 @@ class eigenSystem(object):
     # Getter for the eigenvectors (gives them as a list)
     def evectors(self):
         return [es['evec'] for es in self._eigen]
+    
+    def size(self):
+        return len(self._eigen)
