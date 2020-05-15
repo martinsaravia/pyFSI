@@ -1,6 +1,6 @@
 # This is the first version of pyFSI, a code for solving fluid-structure interaction problems.
 
-Usage:
+# Usage
 
 Create a folder containing an input file under the cases directory.
 
