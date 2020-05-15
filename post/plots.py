@@ -48,8 +48,8 @@ class pScatter(fsiPlot):
         # tidx is the time  index
         super().__init__()
 
-        para = solution[0][0].control()['parameters']
-        time = solution[0][0].control()['time']
+        para = solution[0][0].execution()['parameters']
+        time = solution[0][0].execution()['time']
         esize = solution[0][0].ES.size()
         self.colors = cm.rainbow(np.linspace(0, 1, esize))
         self.data = np.zeros((para['steps'], time['steps'], esize, 2))

@@ -6,15 +6,16 @@ from vectors.eigen import eigenSystem as es
 import copy
 from models.fsiModels.fsiModel import fsiModel
 
-class LFB1dTosi(fsiModel):
+class lfb1D(fsiModel):
     def __repr__(self):
-        return 'LFB1dMartinReduced'
+        return 'lfb1D '
 
-    def __init__(self, control, beam, flow):
-        super().__init__(control, beam, flow)
+    def __init__(self, execution, control, beam, flow):
+        super().__init__(execution, control, beam, flow)
+
         # Time and parametric info
-        self.ti = control['time']['ti']
-        self.pi = control['parameters']['pi']
+        self.ti = execution['time']['ti']
+        self.pi = execution['parameters']['pi']
 
         # Size of the state-space eigen matrix
         self._size = beam.eigen()()['size'] * 2 + 2
@@ -91,17 +92,44 @@ class LFB1dTosi(fsiModel):
         self.S[esize:2*esize, 2*esize] = np.dot(Mi, self.Tb)
         self.S[esize:2*esize, 2*esize+1] = -np.dot(Mi, self.Tt)
 
-        self.S[2*esize, 0:esize] = -self.Eb
-        self.S[2*esize, esize:2*esize] = -self.Db
-        self.S[2*esize, 2*esize] = self.Gb
+        # Formulation considering acceleration terms
+        if self._control['formulation'] == "Saravia":
+            MiDotC = np.dot(Mi, self.C)
+            MiDotK = np.dot(Mi, self.K)
+            MiDotTb = np.dot(Mi, self.Tb)
+            MiDotTt = np.dot(Mi, self.Tt)
 
-        self.S[2*esize+1, 0:esize] = self.Et
-        self.S[2*esize+1, esize:2*esize] = self.Dt
-        self.S[2*esize+1, 2*esize+1] = self.Gt
+            self.S[2 * esize, 0:esize] = -self.Eb - np.dot(self.Bb, MiDotK)
+            self.S[2 * esize, esize:2 * esize] = -self.Db - np.dot(self.Bb, MiDotC)
+            self.S[2 * esize, 2 * esize] = self.Gb - np.dot(self.Bb, MiDotTb)
+            self.S[2 * esize, 2 * esize + 1] = np.dot(self.Bb, MiDotTt)
 
-        # Version without loop and not normalized
-        # mm = beam.mass() + flow.mass() # Unintegrated Mass
-        # self.M = si.simps(np.tensordot(mm.T, es.v(), axes=0))#2.97 LFB1dTosi
+            self.S[2 * esize + 1, 0:esize] = self.Et + np.dot(self.Bt, MiDotK)
+            self.S[2 * esize + 1, esize:2 * esize] = self.Dt + np.dot(self.Bt, MiDotC)
+            self.S[2 * esize + 1, 2 * esize] = np.dot(self.Bt, MiDotTb)
+            self.S[2 * esize + 1, 2 * esize + 1] = self.Gt - np.dot(self.Bt, MiDotTt)
+
+        # Formulation not considering acceleration terms
+        elif self._control['formulation'] == "SaraviaReduced":
+            self.S[2 * esize, 0:esize] = -self.Eb
+            self.S[2 * esize, esize:2 * esize] = -self.Db
+            self.S[2 * esize, 2 * esize] = self.Gb
+
+            self.S[2 * esize + 1, 0:esize] = self.Et
+            self.S[2 * esize + 1, esize:2 * esize] = self.Dt
+            self.S[2 * esize + 1, 2 * esize + 1] = self.Gt
+
+        # Formulation of Tosi (I think some terms are wrong)
+        elif self._control['formulation'] == "Tosi":
+            S[2 * esize, 0:esize] = -(self.Eb + np.dot(self.Bb, np.dot(Mi, self.K)))
+            S[2 * esize, esize:2 * esize] = -(self.Db + np.dot(self.Bb, np.dot(Mi, self.C)))
+            S[2 * esize, 2 * esize] = -np.dot(self.Bb, np.dot(Mi, self.Tb))
+            S[2 * esize, 2 * esize + 1] = self.Gb - np.dot(self.Bb, np.dot(Mi, self.Tt))
+
+            S[2 * esize + 1, 0:esize] = self.Et + np.dot(self.Bt, np.dot(Mi, self.K))
+            S[2 * esize + 1, esize:2 * esize] = self.Dt + np.dot(self.Bt, np.dot(Mi, self.C))
+            S[2 * esize + 1, 2 * esize] = self.Gt + np.dot(self.Bt, np.dot(Mi, self.Tb))
+            S[2 * esize + 1, 2 * esize + 1] = np.dot(self.Bt, np.dot(Mi, self.Tt))
 
     # Calculate eigenvalues and eigenvectors
     def calculate(self):

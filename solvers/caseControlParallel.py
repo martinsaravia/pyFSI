@@ -24,19 +24,18 @@ def runCase(caseName):
     caseDict = makeCase(caseName)
 
     # Add the time dict to the case dict
-    makeTime(caseDict['control'])
+    makeTime(caseDict['execution'])
 
     # Import the solver module
-    solverModule = importlib.import_module(
-            'solvers.' + caseDict['control']['solver']
-            )
+    solverModule = importlib.import_module('solvers.' +
+                                           caseDict['execution']['solver']['type'])
 
     # Create a dictionary per parameter value and store it in a list
     caseDictList = []  # List of dictionaries, one for each parameter configuration
-    for p in caseDict['control']['parameters']['p']:
+    for p in caseDict['execution']['parameters']['p']:
         # Copy the case dict in order to fill it with parametric stuff
         newCaseDict = deepcopy(caseDict)  # I know, bad practice
-        pDict = newCaseDict['control']['parameters']
+        pDict = newCaseDict['execution']['parameters']
         pDict['pi'] = p  # Current Parameter value
         # Parametric boundary
         if pDict['type'] == "boundary":
@@ -47,14 +46,13 @@ def runCase(caseName):
                             boun[var] = pDict['pi'] * newCaseDict['boundary'][idx][var]
         caseDictList.append(newCaseDict)
 
-
     # Solve serial or parallel
     # global progressBar
     # progressBar = tqdm(total=len(caseDictList))
     solution = []
     # Start the processing and map to the list of input dictionaries
-    if "processes" in caseDict['control']:  # parallel run
-        nproc = caseDict['control']["processes"]
+    if "processes" in caseDict['execution']:  # parallel run
+        nproc = caseDict['execution']["processes"]
         # Run in series
         if nproc == 1:
             for d in caseDictList:
@@ -73,6 +71,7 @@ def runCase(caseName):
             # pool.close()
             # pool.join()
             # solution = res
+
             # Syncronous variant
             with Pool(nproc) as p:
                 solution = p.map(parallel, caseDictList)  # SImple map
@@ -92,11 +91,11 @@ def runCase(caseName):
 
 def parallel(iCaseDict):
     solverModule = importlib.import_module(
-            'solvers.' + iCaseDict['control']['solver']
+            'solvers.' + iCaseDict['execution']['solver']
             )
     sol = getattr(solverModule, 'solve')(iCaseDict)
-    #progressBar.update(8)
-    print("--> Solving for parameter: " + str(round(iCaseDict['control']['parameters']['pi'],3)),end='\r')
+    # progressBar.update(8)
+    print("--> Solving for parameter: " + str(round(iCaseDict['execution']['parameters']['pi'],3)),end='\r')
     return sol
 
 
@@ -107,37 +106,35 @@ def makeCase(caseName):
     with open(casePath/caseName, 'r') as f:
         caseDict = json.load(f) # Load the input file
 
-    # Add paths to the control dictionary
+    # Add paths to the execution dictionary
     paths = {}
     paths['casePath'] = casePath
     paths['solidPath'] = casePath/"solid/"
     paths['fluidPath'] = casePath/"fluid/"
     paths['solidPath'].mkdir(parents=True, exist_ok=True)
     paths['fluidPath'].mkdir(parents=True, exist_ok=True)
-    caseDict['control']['paths'] = paths
+    caseDict['execution']['paths'] = paths
 
     return caseDict
 
-
-def makeTime(control):
-
+# Add info to the time dictionary
+def makeTime(execution):
     # Add the current time and the load factor (f) to the time dict
-    time = control['time']
+    time = execution['time']
     time['t'] = np.arange(time['startTime'], time['endTime']+time['deltaT'], time['deltaT'])  # Real Time
     time['steps'] = len(time['t'])
     time['ti'] = time['t'][0]  # Initial time
     
     # Support for parametric studies
-    para = control['parameters']
-    if 'parameters' in control:
+    para = execution['parameters']
+    if 'parameters' in execution:
         para['p'] = np.linspace(para['iPF'], para['fPF'], para['steps'])  # Proportional factor vector
     else:
         para['p'] = [1]
     para['pi'] = para['p'][0]  # Initial Parameter
     
-
-
+# Nice banner to print at the start (or not to nice)
 def banner(s, width=69):
     stars = '*' * width
     pad = (width + len(s)) // 2
-    print( f'{stars}\n{s:>{pad}}\n{stars}')
+    print(f'{stars}\n{s:>{pad}}\n{stars}')

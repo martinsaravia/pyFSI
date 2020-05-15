@@ -7,8 +7,8 @@ class leakageFlow2D(flowModel):
     def __repr__(self):
         return 'leakageFlow2DModel '
 
-    def __init__(self, control, mesh, boundary, flowDict, name='NN'):
-        if control['debug'] == "y":
+    def __init__(self, execution, control, mesh, boundary,  name='NN'):
+        if execution['debug'] == "y":
             print("----------------------" + self.__repr__() + " messages... ----------------------")
             print("--> Warning: Local Re is the same for all regions. Not as above Eq. 2.30")
             print("--> Warning: eta calculation must be checked")
@@ -16,9 +16,10 @@ class leakageFlow2D(flowModel):
             print("--> Only symmetric regions allows, one qx0")
             print("--------------------------------------------------------------------------------")
 
-        super().__init__(mesh, flowDict)
+        super().__init__(execution, control, mesh, boundary)
 
         # Class attributes initialization
+        self._size = None  # Size of the eigensystem
         self._th = None  # Thickness of the model
         self._qx0 = None  # Flow rate at (x,t) = (0, 0)
         self._f0 = None  # Viscous friction factor
@@ -27,7 +28,7 @@ class leakageFlow2D(flowModel):
 
         self.makeGeometry(boundary)  # Make the geometric data
 
-        self.makeDynamics(flowDict)  # Make data associated to the flow dynamics
+        self.makeDynamics(control)  # Make data associated to the flow dynamics
 
     # Create geometric parameters adding data to the regions Dict
     def makeGeometry(self, boundary):
@@ -53,10 +54,10 @@ class leakageFlow2D(flowModel):
                 print("!!! WARNING: No flexible boundaries found in region" + rd['name'])
 
     # Make parameters related to the flow
-    def makeDynamics(self, flowDict):
+    def makeDynamics(self, control):
 
-        # Flow rate (reads the key Qt that is added to the caseflowDict by the solver)
-        self._qx0 = flowDict['bc']['inlet']['Qt']
+        # Flow rate (reads the key Qt that is added to the casecontrol by the solver)
+        self._qx0 = control['bc']['inlet']['Qt']
 
         # Calculate the dimensionless numbers
         self.dRef = list(self._regions.values())[0]['he0']  # Reference inlet size of one of the two regions (symmetry)
@@ -65,7 +66,7 @@ class leakageFlow2D(flowModel):
         self.calcNumbers()
 
         # Nonlinear profile (xix), viscous friction (f0) and derivative of f0 (eta)
-        Rd = self.dimNumbers['Rd']
+        Rd = self.dimNumbers['Rd'].value
         if Rd < 1000.0:
             self._f0 = 48.0 / Rd
             self._xix = 6.0 / 5.0
@@ -74,7 +75,7 @@ class leakageFlow2D(flowModel):
             self._f0 = 0.26 * Rd ** -0.24
             self._xix = 1.0
             self._eta = -(0.0624 * Rd**-0.24) / self._qx0
-            #self._eta2 = -0.0624 * self._fluid['nu']**0.24 / self._qx0**1.24
+            # self._eta2 = -0.0624 * self._fluid['nu']**0.24 / self._qx0**1.24
 
         # Size of the system
         values = list(self._regions.values())
@@ -116,7 +117,6 @@ class leakageFlow2D(flowModel):
         K = self._fluid['rho'] * self._qx0**2 * (knl + kio + kvf)
 
         return self._th * K
-
 
     def C(self):
         cnl = np.zeros(self._size, dtype=object) # Non Linear added stiffness
@@ -191,7 +191,7 @@ class leakageFlow2D(flowModel):
 
     def Eq(self):
         Eq = {}
-        for r in self._regions.values(): # Loop for filling the damping matrix
+        for r in self._regions.values():  # Loop for filling the damping matrix
             enl = np.zeros(1, dtype=object)
             eio = np.zeros(1, dtype=object)
             evf = np.zeros(1, dtype=object)
@@ -232,9 +232,8 @@ class leakageFlow2D(flowModel):
         x = self._mesh.x()
         return si.cumtrapz(term, x, initial=0.0) - si.simps(term, x) * region['hexL']
 
-
-    def xxqx0(self, region): # 2.59 Tosi
-        if self._bc['inlet']['type']=='flowRate' or self._bc['outlet']['type']=='flowRate':
+    def xxqx0(self, region):  # 2.59 Tosi
+        if self._bc['inlet']['type'] == 'flowRate' or self._bc['outlet']['type']=='flowRate':
             print("--> ERROR: Flow rate can only be calculated with both pressure bcs.")
             sys.exit()
         pi = self._bc['inlet']['p']
@@ -250,6 +249,6 @@ class leakageFlow2D(flowModel):
         ioLoss = zetao / (2.0 * heL**2) + zetai / (2.0 * he0**2)
         vfLoss = 0.25 * self._f0 * si.simps(1 / he**3, self._mesh.x())
 
-        self._qx0 = ( (pi - po) / (self._fluid['rho'] * (nlLoss + ioLoss + vfLoss)) )**0.5
+        self._qx0 = ((pi - po) / (self._fluid['rho'] * (nlLoss + ioLoss + vfLoss)) )**0.5
 
 

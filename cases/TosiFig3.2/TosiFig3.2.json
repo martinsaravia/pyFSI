@@ -3,9 +3,13 @@
     "info": "Analysis of critical velocity of Figures 3.2 and 3.3 of Tosi's Thesis",
 
 
-    "control":
+    "execution":
     {
-        "solver":       "pyLeakageFlow",
+        "solver":
+        {
+            "type":         "pyLeakageFlow",
+            "processes":     8
+        },
         "time":
         {
             "startTime":    0,
@@ -21,8 +25,7 @@
             "fPF":      1.0,
             "steps":    50
         },
-        "debug":"n",
-        "processe00s": 8
+        "debug":"n"
     },
 
 
@@ -60,7 +63,8 @@
     "solid":
     {
         "name": "viga",
-        "type": "beamModel",
+        "formulation": "bernoulliEulerBeam",
+        "type": "nnn",
         "section":
         {
             "type": "rect",
@@ -90,8 +94,10 @@
 
     "flow" :
     {
-        "name":     "fluido",
+        "name":     "flujo",
+        "formulation": "leakageFlow2D",
         "type":     "dualChannel",
+        "accel":    "no",
         "units":    "m",
         "fluid":
         {
@@ -129,5 +135,12 @@
                 "zeta": 0.0
             }
         }
+    },
+
+    "fsi":
+    {
+        "name":         "interaccion",
+        "formulation":  "lfb1D",
+        "type":         "SaraviaReduced"
     }
 }

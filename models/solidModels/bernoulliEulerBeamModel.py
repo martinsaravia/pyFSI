@@ -16,18 +16,18 @@ from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVe
 import models.solidModels.calculixBeam as cx
 from models.solidModels.solidModel import solidModel
 
-class beamModel(solidModel):
+class bernoulliEulerBeam(solidModel):
     def __repr__(self):
         return 'beamModel'
 
-    def __init__(self, control, mesh, solidDict, name='beam'):
-        if control['debug'] == "y":
+    def __init__(self, execution, control, mesh, name='beam'):
+        if execution['debug'] == "y":
             print("----------------------" + self.__repr__() + " messages... ----------------------")
             print("--> Warning: modal damping is equal for every mode...")
             print("--> Warning: reference displacments fixed to L/10...")
             print("----------------------------------------------------------------------------")
 
-        super().__init__(mesh, control, solidDict, name)
+        super().__init__(execution, control, mesh, name)
 
         # Kinematics
         self._y = np.zeros(len(mesh.x()))  # Initial y set to zero
@@ -35,30 +35,30 @@ class beamModel(solidModel):
         self.xf = mesh.x()[-1]  # Final position
         self.L = self.xf - self.xi
 
-        # Add calculated parameters to the input solidDictionary
-        solidDict['L'] = self.L  # Add the length to the parameters dictionary
-        solidDict['I'] = (solidDict['section']['b'] * solidDict['section']['h'] ** 3
+        # Add calculated parameters to the input controlionary
+        control['L'] = self.L  # Add the length to the parameters dictionary
+        control['I'] = (control['section']['b'] * control['section']['h'] ** 3
                           / 12.0)
-        solidDict['A'] = solidDict['section']['b'] * solidDict['section']['h']
-        solidDict['m'] = solidDict['A'] * solidDict['material']['rho']
+        control['A'] = control['section']['b'] * control['section']['h']
+        control['m'] = control['A'] * control['material']['rho']
 
         # Create the eigensystem object
-        if solidDict['solution']['type'] == 'modal':
-            if solidDict['solution']['method'] == 'analytic':
-                self._ES = self._analyticEigenSystem(solidDict['solution']['modes'])
-            elif solidDict['solution']['method'] == 'calculix':
-                self._ES = self._calculixEigenSystem(solidDict['solution']['modes'])
+        if control['solution']['type'] == 'modal':
+            if control['solution']['method'] == 'analytic':
+                self._ES = self._analyticEigenSystem(control['solution']['modes'])
+            elif control['solution']['method'] == 'calculix':
+                self._ES = self._calculixEigenSystem(control['solution']['modes'])
             else:
                 print("--> ERROR: Beam solution method " +
-                      solidDict['solution']['method']
+                      control['solution']['method']
                       + " not kwnown !")
 
-            self._setBC(solidDict['bc']['type'], self._ES)  # Impose the boundary condition
+            self._setBC(control['bc']['type'], self._ES)  # Impose the boundary condition
 
             self._ES.calculate()  # Calculate integrals
 
         else:
-            print("--> ERROR: Beam solution type " + solidDict['solution']['type'] + " not kwnown !")
+            print("--> ERROR: Beam solution type " + control['solution']['type'] + " not kwnown !")
 
         # Fill the reference parameters
         self.lRef = self.L
@@ -72,24 +72,24 @@ class beamModel(solidModel):
 
     # Mass vector
     def M(self):
-        return self._dict['m'] * self._ES.v()
+        return self._control['m'] * self._ES.v()
 
     # Damping vector
     def C(self):
         damp = np.empty(len(self._ES.values()), dtype=object)
         for i, val in enumerate(damp):
-            damp[i] = self._dict['solution']['damping'] * self._ES.values()[i] * self._ES.v()[i]
-        return self._dict['m'] * damp
+            damp[i] = self._control['solution']['damping'] * self._ES.values()[i] * self._ES.v()[i]
+        return self._control['m'] * damp
 
     # Stiffness vector
     def K(self):
-        return self._dict['material']['E'] * self._dict['I'] * self._ES.d4()
+        return self._control['material']['E'] * self._control['I'] * self._ES.d4()
 
     # Private functions
     def _analyticEigenSystem(self, nmodes):
         # Aliases
         mesh = self._mesh
-        pars = self._dict
+        pars = self._control
         L = self.L
 
         # Select the type of bc
@@ -123,7 +123,7 @@ class beamModel(solidModel):
 
     def _calculixEigenSystem(self, nmodes):
 
-        ccxModel = cx.calculixBeam(self._control, self._mesh, self._dict)
+        ccxModel = cx.calculixBeam(self._control, self._mesh, self._control)
 
         return ccxModel.eigenSystem()
 
@@ -158,7 +158,7 @@ class beamModel(solidModel):
         freq = 0
         while mode <= modes:
             # Characteristic equations and its derivative
-            if self._dict['bc']['type'] == "clampedFree":
+            if self._control['bc']['type'] == "clampedFree":
                 charEqn = lambda beta: np.cosh(beta * self.L) * np.cos(beta * self.L) + 1.0
                 charEqnPrime = lambda beta: self.L * np.sinh(beta * self.L) * np.cos(beta * self.L) - self.L * np.sin(
                     beta * self.L) * np.cosh(beta * self.L)
@@ -178,7 +178,7 @@ class beamModel(solidModel):
 
     def charEqn(self, beta):
         f = None
-        if self._dict['bc']['type'] == "clampedFree":
+        if self._control['bc']['type'] == "clampedFree":
             f = np.cosh(beta * self.L) * np.cos(beta * self.L) + 1.0
         return f
 
@@ -187,16 +187,16 @@ class beamModel(solidModel):
         return self._y
 
     def ytop(self):
-        return self._y + 0.5 * self._dict['section']['h']
+        return self._y + 0.5 * self._control['section']['h']
 
     def ybot(self):
-        return self._y - 0.5 * self._dict['section']['h']
+        return self._y - 0.5 * self._control['section']['h']
 
     def eigen(self):
         return self._ES
 
     def mass(self):
-        return self._dict['A'] * self._dict['material']['rho']
+        return self._control['A'] * self._control['material']['rho']
 
     def freqs(self):
         return self._ES.values()

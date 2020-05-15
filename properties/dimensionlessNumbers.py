@@ -11,7 +11,6 @@ def makeDimensionlessNumbers(solid=None, flow=None, fsi=None, numbers=None):
         numbers["Fr"] = FroudeNumber(flow)
     # Add solid dimensionless numbers
     if solid:
-
         numbers["Dp"] = displacementNumber(solid)
         numbers["Eg"] = elastoGravityNumber(solid)
     # Add solid dimensionless numbers
@@ -24,50 +23,24 @@ def makeDimensionlessNumbers(solid=None, flow=None, fsi=None, numbers=None):
 
 
 # Dimensionles numbers classes
-class dimensionlessNumber(float):
-    def __new__(cls, value):
-        obj = super().__new__(cls, value)
-        return obj
+class dimensionlessNumber:
+    def __init__(self):
+        pass
 
     def info(self):
-        print("--> " + self.type + " number is: " + "%10.3E" % self)
-
-    # Base operators
-    # def __mul__(self, other):
-    #     return self.value * other
-    #
-    # def __truediv__(self, other):
-    #     return self.value / other
-    #
-    # def __pow__(self, other):
-    #     return self.value ** other
-
-# Classes for the different type of dimensionless numbers
-# class flowNumber(dimensionlessNumber):
-#     def __init__(self):
-#         super().__init__()
-#
-# class solidNumber(dimensionlessNumber):
-#     def __init__(self):
-#         super().__init__()
-#
-# class fsiNumber(dimensionlessNumber):
-#     def __init__(self):
-#         super().__init__()
+        print("--> " + self.type + " number is: " + "%10.3E" % self.value)
 
 # Fluid numbers
 class ReynoldsNumber(dimensionlessNumber):
-    def __new__(cls, flow, inlet=False):
+    def __init__(self, flow, inlet=False):
+        super().__init__()
+        self.type = "Re"
         fluid = flow.fluid()
         if inlet:
             lRef = flow.dRef  # Use the inlet size as reference length
         else:
             lRef = flow.lRef  # Use the flow length as reference length
-        value = fluid["rho"] * flow.vRef * lRef / fluid["mu"]
-        return super().__new__(cls, value)
-
-    def __init__(self, flow, inlet=False):
-        self.type = "Re"
+        self.value = fluid["rho"] * flow.vRef * lRef / fluid["mu"]
 
     # Boundary Layer info
     def bLayer(self, geom, dist):
@@ -88,58 +61,44 @@ class ReynoldsNumber(dimensionlessNumber):
         return flowRegime
 
 class FroudeNumber(dimensionlessNumber):
-    def __new__(cls, flow):
-        value = flow.vRef / (constants["g"] * flow.lRef) ** 0.5
-        return super().__new__(cls, value)
-
     def __init__(self, flow):
+        super().__init__()
         self.type = "Fr"
+        self.value = flow.vRef / (constants["g"] * flow.lRef) ** 0.5
 
 
 # Solid dimensionless numbers
 class displacementNumber(dimensionlessNumber):
-    def __new__(cls, solid):
-        value = solid.uRef / solid.lRef
-        return super().__new__(cls, value)
-
     def __init__(self, solid):
+        super().__init__()
         self.type = "Dp"
-
+        self.value = solid.uRef / solid.lRef
 
 class elastoGravityNumber(dimensionlessNumber):
-    def __new__(cls, solid):
-        mat = solid.material()
-        value = mat['rho'] * constants['g'] * solid.lRef / mat['E']
-        return super().__new__(cls, value)
-
     def __init__(self, solid):
+        super().__init__()
         self.type = "Eg"
+        mat = solid.material()
+        self.value = mat['rho'] * constants['g'] * solid.lRef / mat['E']
 
 
 # FSI numbers
 class massNumber(dimensionlessNumber):
-    def __new__(cls, fsi):
-        value = fsi.flow().fluid()["rho"] / fsi.solid().material()["rho"]
-        return super().__new__(cls, value)
-
     def __init__(self, fsi):
+        super().__init__()
         self.type = "Ms"
-
+        self.value = fsi.flow().fluid()["rho"] / fsi.solid().material()["rho"]
 
 class reducedVelocityNumber(dimensionlessNumber):
-    def __new__(cls, fsi):
-        value = fsi.solid().vRef / fsi.flow().vRef
-        return super().__new__(cls, value)
-
     def __init__(self, fsi):
+        super().__init__()
         self.type = "Vr"
-
+        self.value = fsi.solid().vRef / fsi.flow().vRef
 
 class CauchyNumber(dimensionlessNumber):
-    def __new__(cls, fsi):
-        value = fsi.flow().fluid()["rho"] * fsi.flow()["vRef"]**2 / fsi.solid().material()["E"]
-        return super().__new__(cls, value)
-
     def __init__(self, fsi):
+        super().__init__()
         self.type = "Cy"
+        self.value = (fsi.flow().fluid()["rho"] * fsi.flow()["vRef"] ** 2
+                      / fsi.solid().material()["E"])
 

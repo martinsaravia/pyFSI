@@ -6,18 +6,18 @@ class solidModel(metaclass=ABCMeta):
     def __repr__(self):
         return 'solidModel Abstract Class'
 
-    def __init__(self, mesh, controlDict, solidDict, name=None):
-        # References to the mesh, control, and dictionary
+    def __init__(self, execution, control, mesh, name=None):
+        # References to dictionaries and mesh
+        self._execution = execution
+        self._control = control
         self._mesh = mesh
-        self._control = controlDict
-        self._dict = solidDict
         self.name = name
 
         # Get the material properties
-        if 'db' in solidDict['material']:  # Specify the material from the database
-            self._material = dataBase[solidDict['material']['db']]
+        if 'db' in control['material']:  # Specify the material from the database
+            self._material = dataBase[control['material']['db']]
         else:
-            self._material = solidDict['material']  # Specify the properties directly
+            self._material = control['material']  # Specify the properties directly
 
         # Initialize variables
         self.lRef = None  # Reference length
@@ -30,11 +30,14 @@ class solidModel(metaclass=ABCMeta):
         self.dimNumbers = makeDimensionlessNumbers(solid=self)
 
     # Getters
+    def execution(self):
+        return self._execution
+
+    def control(self):
+        return self._control
+
     def mesh(self):
         return self._mesh
-
-    def dict(self):
-        return self._dict
 
     def material(self):
         return self._material

@@ -1,15 +1,9 @@
 
-from solvers.caseControl import runCase
+from trash.caseControl import runCase
 import matplotlib.pyplot as plt
-import numpy as np
-import pickle
-import matplotlib.cm as cm
-from matplotlib.animation import FuncAnimation
-from post.plots import pScatter, pBifurcation
+from post.plots import pScatter
 from post.prints import *
 import importlib
-
-import pandas as pd
 
 solution = runCase("caltechHarvester02")
 

@@ -1,9 +1,8 @@
 import numpy as np, scipy.integrate as si
 from vectors.eigen import eigenSystem as es
+from models.fsiModels.fsiModel import fsiModel
 
-
-class LFB1dTosi(object):
-
+class LFB1dTosi(fsiModel):
     def __repr__(self):
         return 'LFB1dTosi'
 

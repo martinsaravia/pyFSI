@@ -8,18 +8,20 @@ class flowModel(metaclass=ABCMeta):
     def __repr__(self):
         return 'fluidModel Abstract Class'
 
-    def __init__(self, mesh, flowDict):
+    def __init__(self, execution, control, mesh, boundary):
         # References to the mesh, boundary conditions and regions
+        self._excution = execution
+        self._control = control
         self._mesh = mesh
-        self._bc = flowDict['bc']
-        self._regions = flowDict['regions']  # Regions dict
-        self._dict = flowDict
+        self._boundary = boundary
+        self._bc = control['bc']
+        self._regions = control['regions']  # Regions dict
 
         # Get the fluid properties
-        if "db" in flowDict["fluid"]:  # Specify the fluid from the database
-            self._fluid = db[flowDict["fluid"]["db"]]
+        if "db" in control["fluid"]:  # Specify the fluid from the database
+            self._fluid = db[control["fluid"]["db"]]
         else:
-            self._fluid = flowDict["fluid"]  # Specify the properties directly
+            self._fluid = control["fluid"]  # Specify the properties directly
 
         # Initialize the reference parameters and the dimensionless numbers
         self.vRef = None  # Reference velocity
@@ -32,11 +34,17 @@ class flowModel(metaclass=ABCMeta):
         self.dimNumbers = makeDimensionlessNumbers(flow=self)
 
     # Getters
+    def execution(self):
+        return self._execution
+
+    def control(self):
+        return self._control
+
     def mesh(self):
         return self._mesh
 
-    def dict(self):
-        return self._dict
+    def boundary(self):
+        return self._boundary
 
     def fluid(self):
         return self._fluid
