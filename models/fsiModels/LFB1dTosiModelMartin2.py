@@ -3,67 +3,27 @@
 
 import numpy as np, scipy.integrate as si
 from vectors.eigen import eigenSystem as es
-# from vectors.eigen import eigenVector as evec
-# from vectors.eigen import eigenSystem as esys
 import copy
-class LFB1dTosi(object):
+from models.fsiModels.fsiModel import fsiModel
 
+class LFB1dTosi(fsiModel):
     def __repr__(self):
-        return 'LFB1dTosi'
+        return 'LFB1dMartinReduced'
 
-    def __init__(self, control, beam, fluid):
-
+    def __init__(self, control, beam, flow):
+        super().__init__(control, beam, flow)
         # Time and parametric info
         self.ti = control['time']['ti']
         self.pi = control['parameters']['pi']
 
-        # Store the beam and fluid objects
-        self.beam = beam
-        self.fluid = fluid
-
         # Size of the state-space eigen matrix
         self._size = beam.eigen()()['size'] * 2 + 2
 
-        # Store the control dict
-        self.control = control
-
-        # Assemble the fsi modal matrices K, C and M
-        self.assemble(beam, fluid)
-
-        # Calculate the eigenvaluess and eigenvectors
-        self.calculate()
-
-
-    def assemble(self, beam, fluid):
-        # size of the eigensystem
+        # Initialize the system matrices
         esize = beam.eigen()()['size']
-
-        # Make the norm
-        self.norm = np.zeros((esize, esize)) # Eigenvector Norm
-        phiTphi = np.tensordot(beam.eigen().v(), beam.eigen().v(), axes=0)
-
-        # Construct the norm matrix (assume orthogonality of modes, only diagonal
-        # elements are calculated)
-        for i in range(0, esize):
-            for j in range(0, esize):
-                self.norm[i, j] = si.simps(phiTphi[i, j], beam.mesh().x())
-
-        # System Matrices
         self.K = np.zeros((esize, esize))  # Mass
-        self.C = np.zeros((esize, esize))  # Mass
-        self.M = np.zeros((esize, esize))  # Mass
-        for i in range(0, esize):
-            gi = beam.eigen().v()[i]
-            ki = beam.K()[i] + fluid.K()[i]
-            ci = beam.C()[i] + fluid.C()[i]
-            mi = beam.M()[i] + fluid.M()[i]
-            for j in range(0, esize):
-                gj = beam.eigen().v()[j]
-                self.K[i, j] = -si.simps(ki * gj, beam.mesh().x())
-                self.C[i, j] = -si.simps(ci * gj, beam.mesh().x())
-                self.M[i, j] = si.simps(mi * gj, beam.mesh().x())
-
-        # System Region Vectors
+        self.C = np.zeros((esize, esize))  # Damping
+        self.M = np.zeros((esize, esize))  # Stiffness
         self.Tb = np.zeros(esize)
         self.Tt = np.zeros(esize)
         self.Bb = np.zeros(esize)
@@ -72,47 +32,75 @@ class LFB1dTosi(object):
         self.Dt = np.zeros(esize)
         self.Eb = np.zeros(esize)
         self.Et = np.zeros(esize)
-        self.Gt = fluid.Gq()['channelTop']
-        self.Gb = fluid.Gq()['channelBot']
+        self.Gt = None
+        self.Gb = None
+        self.norm = np.zeros((esize, esize))  # Eigenvector Norm
+        self.S = np.zeros((self._size, self._size))  # System matrix
+        self.ES = None
 
+        # Assemble the fsi modal matrices K, C and M
+        self.assemble(beam, flow)
+
+        # Calculate the eigenvaluess and eigenvectors
+        self.calculate()
+
+    def assemble(self, beam, flow):
+        # size of the eigensystem
+        esize = beam.eigen()()['size']
+
+        # Make the norm
+        phiTphi = np.tensordot(beam.eigen().v(), beam.eigen().v(), axes=0)
+        # Construct the norm matrix (assume orthogonality of modes, only diagonal
+        # elements are calculated)
+        for i in range(0, esize):
+            for j in range(0, esize):
+                self.norm[i, j] = si.simps(phiTphi[i, j], beam.mesh().x())
+
+        # Fill the system Matrices
         for i in range(0, esize):
             gi = beam.eigen().v()[i]
-            self.Tt[i] = si.simps(fluid.Tf()['channelTop'] * gi, beam.mesh().x())
-            self.Tb[i] = si.simps(fluid.Tf()['channelBot'] * gi, beam.mesh().x())  # Changed the sign
+            ki = beam.K()[i] + flow.K()[i]
+            ci = beam.C()[i] + flow.C()[i]
+            mi = beam.M()[i] + flow.M()[i]
+            for j in range(0, esize):
+                gj = beam.eigen().v()[j]
+                self.K[i, j] = -si.simps(ki * gj, beam.mesh().x())
+                self.C[i, j] = -si.simps(ci * gj, beam.mesh().x())
+                self.M[i, j] = si.simps(mi * gj, beam.mesh().x())
 
-            self.Bt[i] = si.simps(fluid.Bq()['channelTop'] * gi, beam.mesh().x())
-            self.Bb[i] = si.simps(fluid.Bq()['channelBot'] * gi, beam.mesh().x())
-
-            self.Dt[i] = si.simps(fluid.Dq()['channelTop'] * gi, beam.mesh().x())
-            self.Db[i] = si.simps(fluid.Dq()['channelBot'] * gi, beam.mesh().x())
-
-            self.Et[i] = si.simps(fluid.Eq()['channelTop'] * gi, beam.mesh().x())
-            self.Eb[i] = si.simps(fluid.Eq()['channelBot'] * gi, beam.mesh().x())
-
+        # System Region Vectors
+        self.Gt = flow.Gq()['channelTop']
+        self.Gb = flow.Gq()['channelBot']
+        for i in range(0, esize):
+            gi = beam.eigen().v()[i]
+            self.Tt[i] = si.simps(flow.Tf()['channelTop'] * gi, beam.mesh().x())
+            self.Tb[i] = si.simps(flow.Tf()['channelBot'] * gi, beam.mesh().x())  # Changed the sign
+            self.Bt[i] = si.simps(flow.Bq()['channelTop'] * gi, beam.mesh().x())
+            self.Bb[i] = si.simps(flow.Bq()['channelBot'] * gi, beam.mesh().x())
+            self.Dt[i] = si.simps(flow.Dq()['channelTop'] * gi, beam.mesh().x())
+            self.Db[i] = si.simps(flow.Dq()['channelBot'] * gi, beam.mesh().x())
+            self.Et[i] = si.simps(flow.Eq()['channelTop'] * gi, beam.mesh().x())
+            self.Eb[i] = si.simps(flow.Eq()['channelBot'] * gi, beam.mesh().x())
 
         # System  Matrix
         Mi = np.linalg.inv(self.M)
-        gsize = esize * 2 + 2
-        S = np.zeros((gsize, gsize))
 
-        S[0:esize, esize:2*esize] = np.identity(esize)
-        S[esize:2*esize, 0:esize] = np.dot(Mi, self.K)
-        S[esize:2*esize, esize:2*esize] = np.dot(Mi, self.C)
-        S[esize:2*esize, 2*esize] = np.dot(Mi, self.Tb)
-        S[esize:2*esize, 2*esize+1] = -np.dot(Mi, self.Tt)
+        self.S[0:esize, esize:2*esize] = np.identity(esize)
+        self.S[esize:2*esize, 0:esize] = np.dot(Mi, self.K)
+        self.S[esize:2*esize, esize:2*esize] = np.dot(Mi, self.C)
+        self.S[esize:2*esize, 2*esize] = np.dot(Mi, self.Tb)
+        self.S[esize:2*esize, 2*esize+1] = -np.dot(Mi, self.Tt)
 
-        S[2*esize, 0:esize] = -self.Eb
-        S[2*esize, esize:2*esize] = -self.Db
-        S[2*esize, 2*esize] = self.Gb
+        self.S[2*esize, 0:esize] = -self.Eb
+        self.S[2*esize, esize:2*esize] = -self.Db
+        self.S[2*esize, 2*esize] = self.Gb
 
-        S[2*esize+1, 0:esize] = self.Et
-        S[2*esize+1, esize:2*esize] = self.Dt
-        S[2*esize+1, 2*esize+1] = self.Gt
-
-        self.S = S
+        self.S[2*esize+1, 0:esize] = self.Et
+        self.S[2*esize+1, esize:2*esize] = self.Dt
+        self.S[2*esize+1, 2*esize+1] = self.Gt
 
         # Version without loop and not normalized
-        # mm = beam.mass() + fluid.mass() # Unintegrated Mass
+        # mm = beam.mass() + flow.mass() # Unintegrated Mass
         # self.M = si.simps(np.tensordot(mm.T, es.v(), axes=0))#2.97 LFB1dTosi
 
     # Calculate eigenvalues and eigenvectors
@@ -122,8 +110,8 @@ class LFB1dTosi(object):
         evalues, evectors = np.linalg.eig(self.S)
 
         # Create an eigensystem object
-        self._ES  = es.eigenSystem(evalues, evectors, sort=True)
+        self.ES = es.eigenSystem(evalues, evectors, sort=True)
 
-    # Get the eigensystem
-    def eigen(self):
-        return self._ES
+
+
+

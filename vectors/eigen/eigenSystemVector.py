@@ -13,7 +13,7 @@ class eigenSystemVector(object):
     def __init__(self, values, vectors, name=None):
 
         # Flags
-        self.calculated = False # Calculation of mode integrals and other stuff
+        self.calculated = False  # Calculation of mode integrals and other stuff
 
         # Create the parameters dictionary
         pdict = {}

@@ -4,9 +4,9 @@ class boundary1DBeam(boundary1D):
     def __repr__(self):
         return 'boundary1D: boundary1DBeam'
 
-    def __init__(self, beam, dict):
+    def __init__(self, beam, boundaryDict):
         self._beam = beam
-        super(boundary1DBeam, self).__init__(beam.mesh(), beam.name())
+        super().__init__(beam.mesh(), boundaryDict['name'])
 
     # Abstract Methods
     def update(self):

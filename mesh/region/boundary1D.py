@@ -3,12 +3,12 @@ import numpy as np
 
 class boundary1D(metaclass=ABCMeta):
 
-    def __repr__():
+    def __repr__(self):
         return 'boundary1D'
 
     def __init__(self, mesh, name):
-        self._name = name
         self._mesh = mesh
+        self._name = name
 
         # First derivative
         edgeOrder = 2

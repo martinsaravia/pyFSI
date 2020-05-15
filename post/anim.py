@@ -29,7 +29,7 @@ class pAnimation():
         writer = animation.FFMpegWriter(fps=15,
                                         metadata=dict(artist='Me'),
                                         bitrate=1800)
-        self.ani.save('aa.mp4', writer=writer)
+        self.ani.save(name + '.mp4', writer=writer)
 
 
 

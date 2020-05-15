@@ -31,7 +31,7 @@ def runCase(caseName):
             'solvers.' + caseDict['control']['solver']
             )
 
-    # Create a dictionary per parameter value and store in a list
+    # Create a dictionary per parameter value and store it in a list
     caseDictList = []  # List of dictionaries, one for each parameter configuration
     for p in caseDict['control']['parameters']['p']:
         # Copy the case dict in order to fill it with parametric stuff
@@ -55,31 +55,34 @@ def runCase(caseName):
     # Start the processing and map to the list of input dictionaries
     if "processes" in caseDict['control']:  # parallel run
         nproc = caseDict['control']["processes"]
+        # Run in series
+        if nproc == 1:
+            for d in caseDictList:
+                solution.append(getattr(solverModule, 'solve')(d))
+        # Run in parallel
+        else:
+            pool = Pool(nproc)
 
+            # Asyncronous variant
+            # solution = pool.map_async(parallel, caseDictList).get()
 
-        pool = Pool(nproc)
-
-        # Asyncronous variant
-        # solution = pool.map_async(parallel, caseDictList).get()
-
-        # Asyncronour unordered
-        # res = pool.imap_unordered(parallel, caseDictList)
-        # for _ in tqdm(res, total=len(caseDictList)):
-        #     pass
-        # pool.close()
-        # pool.join()
-        # solution = res
-
-        # Syncronous variant
-        with Pool(nproc) as p:
-            solution = p.map(parallel, caseDictList)  # SImple map
-            p.close()
-            p.join()
+            # Asyncronour unordered
+            # res = pool.imap_unordered(parallel, caseDictList)
+            # for _ in tqdm(res, total=len(caseDictList)):
+            #     pass
+            # pool.close()
+            # pool.join()
+            # solution = res
+            # Syncronous variant
+            with Pool(nproc) as p:
+                solution = p.map(parallel, caseDictList)  # SImple map
+                p.close()
+                p.join()
 
     else:
         nproc = 1
         for d in caseDictList:
-            solution.append(getattr(solverModule, 'solve')(newCaseDict))
+            solution.append(getattr(solverModule, 'solve')(d))
 
     # Print elapsed time and return solution
     finish = time.perf_counter()

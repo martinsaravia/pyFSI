@@ -1,7 +1,6 @@
 import numpy as np, scipy.integrate as si
 from vectors.eigen import eigenSystem as es
-# from vectors.eigen import eigenVector as evec
-# from vectors.eigen import eigenSystem as esys
+
 
 class LFB1dTosi(object):
 
@@ -9,6 +8,10 @@ class LFB1dTosi(object):
         return 'LFB1dTosi'
 
     def __init__(self, control, beam, fluid):
+
+        # Time and parametric info
+        self.ti = control['time']['ti']
+        self.pi = control['parameters']['pi']
 
         self.beam = beam
         self.fluid = fluid
@@ -113,7 +116,7 @@ class LFB1dTosi(object):
         evalues, evectors = np.linalg.eig(self.S)
 
         # Create an eigensystem object
-        self._ES  = es.eigenSystem(evalues, evectors, sort=False)
+        self._ES  = es.eigenSystem(evalues, evectors, sort=True)
 
     # Get the eigensystem
     def eigen(self):

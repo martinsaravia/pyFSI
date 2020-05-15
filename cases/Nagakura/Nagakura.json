@@ -94,7 +94,7 @@
         "units":    "m",
         "fluid":
         {
-            "type": "air"
+            "db": "air"
         },
         "thickness": 1,
         "regions":
