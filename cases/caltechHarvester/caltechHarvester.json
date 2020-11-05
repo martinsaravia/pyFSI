@@ -1,0 +1,146 @@
+
+{
+    "info": "Analysis of critical velocity of Figures 3.2 and 3.3 of Tosi's Thesis",
+
+
+    "execution":
+    {
+        "solver":
+        {
+            "type":         "pyLeakageFlow",
+            "processes":    8
+        },
+        "time":
+        {
+            "startTime":    0,
+            "endTime":      1,
+            "deltaT":       0.1
+        },
+        "parameters":
+        {
+            "type":     "boundary",
+            "names":    ["bTop", "bBot"],
+            "vars":     ["hi", "hf"],
+            "iPF":      0.1,
+            "fPF":      1.0,
+            "steps":    16
+        },
+        "debug":"n"
+    },
+
+
+    "mesh":
+    {
+        "type": "from3Parameters",
+        "xi": 0.0,
+        "xf": 0.2,
+        "dx": 0.001
+    },
+
+
+    "boundary":[
+    {
+        "name":     "bTop",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       2.5E-3,
+        "hf":       2.5E-3
+    },
+    {
+        "name":     "bBot",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       -2.5E-3,
+        "hf":       -2.5E-3
+    },
+    {
+        "name":     "beamTop",
+        "type":     "boundary1DBeam",
+        "beamName": "viga",
+        "surface":  "top"
+    },
+    {
+        "name":     "beamBot",
+        "type":     "boundary1DBeam",
+        "beamName": "viga",
+        "surface":  "bot"
+    }],
+
+
+    "solid":
+    {
+        "name": "viga",
+        "formulation": "bernoulliEulerBeam",
+        "type": "nnn",
+        "section":
+        {
+            "type": "rect",
+            "b": 1,
+            "h": 2.0E-4
+        },
+        "material":
+        {
+            "name":     "aluminio",
+            "type":     "isoElastic",
+            "E":        1.1E11,
+            "nu":       0.3,
+            "rho":      8.78E3
+        },
+        "solution":
+        {
+            "type":     "modal",
+            "method":   "analytic",
+            "modes":    4,
+            "damping":  0.01
+        },
+        "bc":
+        {
+            "type":     "clampedFree"
+        }
+    },
+
+    "flow" :
+    {
+        "name":     "flujo",
+        "formulation": "leakageFlow2D",
+        "units":    "m",
+        "fluid":
+        {
+            "db": "air"
+        },
+        "thickness": 1,
+        "regions":[
+        {
+            "name":        "channelTop",
+            "topBoundary": "bTop",
+            "botBoundary": "beamTop"
+        },
+        {
+            "name":        "channelBot",
+            "topBoundary": "beamBot",
+            "botBoundary": "bBot"
+        }],
+        "bc" :
+        {
+            "type":     "variableInletFlowRate",
+            "inlet":
+            {
+                "Qi":    1.0E-4,
+                "Qf":    5.2E-2,
+                "zeta":  1.0
+            },
+            "outlet":
+            {
+                "type": "outFlow",
+                "zeta": 0.0
+            }
+        }
+    },
+
+    "fsi":
+    {
+        "name":         "interaccion",
+        "formulation":  "lfb1D",
+        "type":         "SaraviaReduced"
+    }
+}
