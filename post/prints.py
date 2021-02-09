@@ -41,3 +41,20 @@ def printStateMatrix(solution):
                    showindex=True,
                    numalign="decimal",
                    stralign="center"))
+
+
+def printNumbers(solution):
+    flow = solution.flow()
+    nflow = list(flow.dimNumbers.values())
+    for n in nflow:
+        n.info()
+
+    solid = solution.solid()
+    nsolid = list(solid.dimNumbers.values())
+    for n in nsolid:
+        n.info()
+
+    fsi = solution
+    nfsi = list(fsi.dimNumbers.values())
+    for n in nfsi:
+        n.info()

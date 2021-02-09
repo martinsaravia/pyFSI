@@ -1,10 +1,10 @@
 import os, importlib, subprocess, numpy as np
 from pathlib import Path
 
-from models.solidModels.solidModel import *
+from models.solidModels.solidBase import *
 from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
 
-import pycalculix as pyc
+# import pycalculix as pyc
 
 class calculixBeam(object):
 
@@ -17,8 +17,16 @@ class calculixBeam(object):
         self._mesh = mesh
         self._dict = dict
 
+        # Init file parameters
+        self.fileName = None
+        self.fileExt = None
+        self.filePath = None
+        self._result = None
+
+        # Write the Calculix input file
         self.writeInput(control, mesh, dict)
 
+        # Run Calculix
         self.run()
 
     def writeInput(self, control, mesh, dict):
@@ -55,22 +63,20 @@ class calculixBeam(object):
             f.write('\t' + sectionPars + '\n')
             f.write('\t' + '0.0, 1.0, 0.0\n')
 
-            #Write the BC
+            # Write the BC
             f.write('*BOUNDARY\n')
             if dict['bc']['type'] == 'clampedFree':
                 f.write('\t1, 1, 6, 0.0\n')
-                #f.write('\tALL,3, 3, 0.0\n')  # No es necesaria si uso B21 (2D)
+                # f.write('\tALL,3, 3, 0.0\n')  # No es necesaria si uso B21 (2D)
 
-
-            #Write step InfoArray
+            # Write step InfoArray
             dSol = dict['solution']
             f.write('*STEP\n')
             if dict['solution']['type'] == 'modal':
                 f.write('*FREQUENCY, EIGENSOLVER=SUBSPACE\n')
                 f.write('\t' + str(dSol['modes']) + ',,,,\n')
 
-
-            f.write('*NODE FILE, OUTPUT=2D\n') #Output 2D transforms the beam into a solid.
+            f.write('*NODE FILE, OUTPUT=2D\n')  # Output 2D transforms the beam into a solid.
             f.write('\tU\n')
             f.write('*EL FILE, OUTPUT=2D\n')
             f.write('\tE, S\n')
@@ -83,18 +89,18 @@ class calculixBeam(object):
         # subprocess.run(runstr, shell=True)
         # print("--> Calculix solver has run correctly...")
 
-        model = pyc.FeaModel(str(self.filePath)) # make the pyCalculix Model
+        model = pyc.FeaModel(str(self.filePath))  # make the pyCalculix Model
 
         problem = pyc.Problem(model, 'modal', fname=str(self.filePath/self.fileName)) # Make the problem object
 
-        problem.solveModal() # Invoke a modified version of pyCalculix
+        problem.solveModal()  # Invoke a modified version of pyCalculix
 
-        self._result = problem.rfile.resultsDict() # Store the results
+        self._result = problem.rfile.resultsDict()  # Store the results
 
     def eigenSystem(self):
         # Get the values and vectors from the tricky results structures
         values = list(self._result.keys()) # Eigenvalues as a list of floats
-        print(values)
+        # print(values)
         # ux = np.zeros(len(mode['node']))
         # for i in mode['node']:
         #     ux[i-1] = mode['node'][i]['ux']
@@ -105,7 +111,7 @@ class calculixBeam(object):
         for mode in theList:
             uy = np.zeros(len(mode['node']))
             for i in mode['node']:
-                uy[i-1] = mode['node'][i]['uz'] #assume the transverse direction is y
+                uy[i-1] = mode['node'][i]['uz']  # assume the transverse direction is y
             vectors.append(uy)
 
         # Eigenvalues and eigenvectors

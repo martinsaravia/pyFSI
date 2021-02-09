@@ -1,6 +1,6 @@
-# pyFSI v0.1.0
+# pyFSI v0.2.0
 
-This is the first version of pyFSI, a code for solving fluid-structure interaction problems.
+This is the second version of pyFSI, a code for solving fluid-structure interaction problems.
 
 # Usage
 

@@ -4,29 +4,40 @@ class boundary1DBeam(boundary1D):
     def __repr__(self):
         return 'boundary1D: boundary1DBeam'
 
-    def __init__(self, beam, boundaryDict):
-        self._beam = beam
-        super().__init__(beam.mesh(), boundaryDict['name'])
+    def __init__(self, beam, control):
+        super().__init__(beam.mesh(), control['name'])
 
-    # Abstract Methods
+        # ----- Public attributes ----- #
+        self.name = control['name']
+        self.y = None  # Position of the boundary
+
+        # ----- Private attributes ----- #
+        self._beam = beam
+        self._control = control
+
+    # ----- Abstract methods ----- #
     def update(self):
-        pass
+        # Update the position of the boundary
+        self.y = self._beam.y[self._control['surface']]
+        # Update the time derivatives
+        self.dy = self._beam.dy['mid']
+        self.ddy = self._beam.ddy['mid']
+        self.dyi = si.cumtrapz(self.dy, self._mesh.x, initial=0.0)
+        self.ddyi = si.cumtrapz(self.ddy, self._mesh.x, initial=0.0)
+        # Re calculate the spatial derivatives and integrals
+        self.calculate()
 
     def isFlexible(self):
         return True
 
-    def y(self):
-        return self._beam.y()
+    # ----- Getters ----- #
+    def beam(self):
+        return self._beam
 
-    def ybot(self):
-        return self._beam.ybot()
+    def control(self):
+        return self._control
 
-    def ytop(self):
-        return self._beam.ytop()
-
-    # Getters
     def eigen(self):
-        return self._beam.eigen()
+        return self._beam.eigen
 
-    def N(self):
-        return self._beam.N()
+

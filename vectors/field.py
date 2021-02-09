@@ -8,6 +8,7 @@ class field(np.ndarray):
         obj = np.asarray(nparray).view(cls)
         # add the new attribute to the created instance
         obj.info = info
+        obj.size
         # Finally, we must return the newly created object:
         return obj
 

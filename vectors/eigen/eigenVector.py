@@ -1,56 +1,55 @@
+# --------------------------------------------------------------------------- #
+#    p    #     version: 0.1
+#    y    #     date: 02/07/2020
+#    F    #     author: Martin Saravia
+#    S    #     description: eigen vector class
+#    I    #     return: eigen vector object
+# --------------------------------------------------------------------------- #
+# Notes:
+#   This class creates an eigenvector object inheriting from a numpy array
+#   Note the this class inherits from field, which inherits from np.ndarray
+#   Not strictly neccessary, but helps to understand inheritance (sorry)
+# --------------------------------------------------------------------------- #
 from vectors.field import field
 import numpy as np
-from scipy import integrate
+import scipy.integrate as si
 
-# Note the this class inherits from field, which inherits from np.ndarray
-# Not strictly neccessary, but helps to understand inheritance (sorry)
 
 class eigenVector(field):
-    def __new__(cls, nparray, mesh, info=None, normalize=True):
+    def __new__(cls, nparray, mesh, info=None, normalize='mass', mass=None):
+
+        # ----- Casting  ----- #
         # Input array is an already formed ndarray instance
         # We first cast to be our class type
-
-        # Normalization
-        if normalize:
-            factor = abs((mesh.x()[-1]-mesh.x()[0]))**0.5
+        # Choose Normalization
+        if normalize == 'length':
+            factor = abs((mesh.L))**0.5
             obj = np.asarray(nparray).view(cls) / factor
+        if normalize == 'mass':
+            factor = (1 / si.simps(mass*nparray**2, mesh.x))**0.5
+            obj = np.asarray(nparray).view(cls) * factor
         else:
             obj = np.asarray(nparray).view(cls)
 
-        obj.__mesh = mesh
-
-        # obj = obj / max([obj.max(), obj.min()], key=abs)
-
-        # add the new attribute to the created instance
+        # ----- Public attributes ----- #
         obj.info = info
-
-        # Attemtp using mirrored ghost boundary (does not work)
-        # temp = np.zeros(obj.size + 3)
-        # temp[3:] = obj
-        # temp[2] = obj[1]
-        # temp[1] = obj[2]
-        # temp[0] = obj[3]
-        # tempd1 = np.gradient(temp, edge_order=edgeOrder)
-        # tempd2 = np.gradient(tempd1 , edge_order=edgeOrder)
-        # tempd3 = np.gradient(tempd2 , edge_order=edgeOrder)
-        # tempd4 = np.gradient(tempd3,  edge_order=edgeOrder)
-        # obj.__d1 = tempd1[3:]
-        # obj.__d2 = tempd2[3:]
-        # obj.__d3 = tempd3[3:]
-        # obj.__d4 = tempd4[3:]
-
         edgeOrder = 2
-        obj.__d1 = np.gradient(obj, mesh.x(), edge_order=edgeOrder)
-        obj.__d2 = np.gradient(obj.__d1, obj.__mesh.x(), edge_order=edgeOrder)
-        obj.__d3 = np.gradient(obj.__d2, obj.__mesh.x(), edge_order=edgeOrder)
-        obj.__d4 = np.gradient(obj.__d3, obj.__mesh.x(), edge_order=edgeOrder)
-        # obj.__i1i = integrate.cumtrapz(obj, mesh.x(), initial=0.0)
-        # obj.__i1d = integrate.simps(obj, mesh.x())
+        obj.d1 = np.gradient(obj, mesh.x, edge_order=edgeOrder)
+        obj.d2 = np.gradient(obj.d1, mesh.x, edge_order=edgeOrder)
+        obj.d3 = np.gradient(obj.d2, mesh.x, edge_order=edgeOrder)
+        obj.d4 = np.gradient(obj.d3, mesh.x, edge_order=edgeOrder)
+        obj.ix = si.cumtrapz(obj, mesh.x, initial=0.0)
+        obj.iL = si.simps(obj, mesh.x)
 
-        # Frequency
-        obj.freq = 0
+        # ----- Private attributes ----- #
+        obj._mesh = mesh
 
         return obj
+
+    # Re-execute the integral after application of boundary conditions
+    def correct(self):
+        self.ix = si.cumtrapz(self, self._mesh.x, initial=0.0)
+        self.iL = si.simps(self, self._mesh.x)
 
     def __array_finalize__(self, obj):
         # see InfoArray.__array_finalize__ for comments
@@ -60,16 +59,5 @@ class eigenVector(field):
 
     # Getters
     def mesh(self):
-        return self.__mesh
+        return self._mesh
 
-    def d1(self):
-        return self.__d1
-
-    def d2(self):
-        return self.__d2
-
-    def d3(self):
-        return self.__d3
-
-    def d4(self):
-        return self.__d4

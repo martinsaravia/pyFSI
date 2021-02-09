@@ -1,29 +1,33 @@
 from abc import ABCMeta
-from properties.materialProperties import solids as dataBase
-from properties.dimensionlessNumbers import makeDimensionlessNumbers
+from models.properties.materialProperties import solids as dataBase
+from models.properties.dimensionlessNumbers import makeDimensionlessNumbers
 
 class solidModel(metaclass=ABCMeta):
     def __repr__(self):
         return 'solidModel Abstract Class'
 
     def __init__(self, execution, control, mesh, name=None):
-        # References to dictionaries and mesh
+
+        # ----- Public attribues ----- #
+        self.name = name
+        self.dof = None
+        self.output = []  # List of file objects
+        self.lRef = None  # Reference length
+        self.uRef = None  # Reference displacement
+        self.vRef = None  # Reference velocity
+        self.dimNumbers = None  # Dimensionless numbers
+
+        # ----- Private attributes ----- #
         self._execution = execution
         self._control = control
         self._mesh = mesh
-        self.name = name
 
+        # ----- Procedures ----- #
         # Get the material properties
         if 'db' in control['material']:  # Specify the material from the database
             self._material = dataBase[control['material']['db']]
         else:
             self._material = control['material']  # Specify the properties directly
-
-        # Initialize variables
-        self.lRef = None  # Reference length
-        self.uRef = None  # Reference displacement
-        self.vRef = None  # Reference velocity
-        self.dimNumbers = None  # Dimensionless numbers
 
     # Calculate the dimensionless numbers
     def calcNumbers(self):
@@ -41,3 +45,7 @@ class solidModel(metaclass=ABCMeta):
 
     def material(self):
         return self._material
+
+    def finish(self):
+        for i in self.output:
+            i.close()  # Close all files

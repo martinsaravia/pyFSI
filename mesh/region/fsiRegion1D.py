@@ -1,5 +1,19 @@
+# --------------------------------------------------------------------------- #
+#    p    #     version: 0.1
+#    y    #     date: 02/07/2020
+#    F    #     author: Martin Saravia
+#    S    #     description: FSI Region class
+#    I    #     return: region
+# --------------------------------------------------------------------------- #
+# Notes:
+#   This class generates a region from two 1D boundary objects
+#   Only one boundary can be flexible
+#
+# --------------------------------------------------------------------------- #
+
 import numpy as np
 import scipy.integrate as si
+
 
 
 class fsiRegion1D(object):
@@ -7,51 +21,77 @@ class fsiRegion1D(object):
     def __repr__(self):
         return 'fsiRegion1D'
 
-    def __init__(self, mesh, bbot, btop, name=None):
-        self.__name = name
-        # Channel gap
-        self.__bot = bbot.y() # values of the bottom
-        self.__top = btop.y() # values of the top
-        self.__he = self.__top - self.__bot
+    def __init__(self, control, mesh, boundary):
 
-        # Eigen system
-        if bbot.isFlexible():
-            flexBoundary = bbot
+        # ----- Public attributes ----- #
+        self.name = control['name']
+        self.type = control['type']
+
+        # General container for derivatives, integrals, sizes
+        self.data = {'s':       np.empty(mesh.size),
+                     'six':     np.empty(mesh.size),  # Size indefinite integral
+                     'siL':     0,  # Size definite integral between 0-L
+                     'ds':      np.empty(mesh.size),  # Vel of the size
+                     'dds':     np.empty(mesh.size),  # Vel of the size
+                     'dsi':     np.empty(mesh.size),  # Vel of the size integral
+                     'ddsi':    np.empty(mesh.size)}  # Accel of the size integral
+
+        # ----- Private attributes ----- #
+        self._mesh = mesh   # Reference to the mesh
+        self._bBot = boundary[control['botBoundary']]  # Top boundary
+        self._bTop = boundary[control['topBoundary']]   # Bottom boundary
+
+        # ----- Procedures ----- #
+        # Find the associated flexible boundary
+        if self._bBot.isFlexible():
+            flexBoundary = self._bBot
+        elif self._bTop.isFlexible():
+            flexBoundary = self._bTop
         else:
-            flexBoundary = btop
+            flexBoundary = None
+            print("---> Warning: No flexible boundary found for region" + self.name)
 
-        self.__G = flexBoundary.eigen()
+        self._eigen = flexBoundary.eigen()
+
+        self.check()
+
+    # Update the geometric data
+    def update(self):
+        self._bTop.update()
+        self._bBot.update()
+        self.data['s'] = self._bTop.y - self._bBot.y
+        self.data['six'] = self._bTop.ix - self._bBot.ix
+        self.data['siL'] = self._bTop.iL - self._bBot.iL
+        self.data['ds'] = self._bTop.dy - self._bBot.dy
+        self.data['dds'] = self._bTop.ddy - self._bBot.ddy
+        self.data['dsi'] = self._bTop.dyi - self._bBot.dyi
+        self.data['ddsi'] = self._bTop.ddyi - self._bBot.ddyi
 
 
-        self.__xi = mesh.x()[0] # x initial limit
-        self.__xf = mesh.x()[-1] # x final limit
-        self.__bot = bbot.y() # values of the bottom
-        self.__top = btop.y() # values of the top
-        self.__he = self.__top - self.__bot
 
-        # Calculate common integrals and store in dict
-        he = self.__he
-        ix = {}
-        ix['i1'] = si.cumtrapz(1.0/he, mesh.x(), initial=0.0)
-        ix['i2'] = si.simps(1.0/he, mesh.x())
-        self.__integrals = ix
+    def check(self):
+        # Check if the mesh density is ok
+        if (self._mesh.x[1] - self._mesh.x[0]) > self.data['s'][0]:
+            print("--> WARNING: mesh dx is smaller the channel inlet "
+                  "for region " + self.name + ". Results may be wrong. ")
 
-    # Getters
-    def name(self):
-        return self.__name
+    # ----- Getters ----- #
+    # Return reference to the mesh
+    def mesh(self):
+        return self._mesh
 
-    def he(self):
-        return self.__he
+    # Return reference to the flex boundary (only 1 flex boundary)
+    def eigen(self):
+        return self._eigen
+
+    # Reference to the boundary objects
+    def top(self):
+        return self._bTop
 
     def bot(self):
-        return self.__bot
+        return self._bBot
 
-    def top(self):
-        return self.__top
+    def boundaries(self):
+        return [self._bTop, self._bBot]
 
-    def mesh(self):
-        return self.__mesh # Return reference to the mesh
 
-    # Return integral by key
-    def it(self, key):
-        return self.__integrals[key]
