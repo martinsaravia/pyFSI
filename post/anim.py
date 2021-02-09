@@ -1,9 +1,7 @@
-# Plotting routines
 
 from post.plots import *
 import matplotlib.animation as animation
 from matplotlib.animation import FFMpegWriter
-import numpy as np
 
 class pAnimation():
     def __init__(self,

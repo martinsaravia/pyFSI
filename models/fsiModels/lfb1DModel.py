@@ -81,7 +81,7 @@ class lfb1D(fsiBase):
                 ci = flow.C()[i]
                 mi = flow.M()[i]
                 for j in range(0, esize):
-                    gj = beam.eigen.vectors[j]
+                    gj = beam.eigen.vectors[j] / beam.eigen.vectors[j].normFactor
                     self.K[i, j] = -si.simps(ki * gj, beam.mesh().x) + beam.K[i, j]
                     self.C[i, j] = -si.simps(ci * gj, beam.mesh().x) + beam.C[i, j]
                     self.M[i, j] = si.simps(mi * gj, beam.mesh().x) + beam.M[i, j]

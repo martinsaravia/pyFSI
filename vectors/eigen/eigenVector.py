@@ -33,6 +33,7 @@ class eigenVector(field):
 
         # ----- Public attributes ----- #
         obj.info = info
+        obj.normFactor = factor
         edgeOrder = 2
         obj.d1 = np.gradient(obj, mesh.x, edge_order=edgeOrder)
         obj.d2 = np.gradient(obj.d1, mesh.x, edge_order=edgeOrder)

@@ -1,0 +1,144 @@
+
+{
+    "info": "Analysis of critical velocity of Figures 3.2 and 3.3 of Tosi's Thesis",
+
+
+    "execution":
+    {
+        "solver":
+        {
+            "type":         "eigen",
+            "processes":     1
+        },
+        "time":
+        {
+            "stepping":         "parametric",
+            "parameter":        "inletFlowRate",
+            "startParameter":    1.0E-4,
+            "endParameter":      5.2E-2,
+            "steps":             100
+        }
+    },
+
+    "mesh":
+    {
+        "type": "from3Parameters",
+        "xi": 0.0,
+        "xf": 0.2,
+        "dx": 0.002
+    },
+
+
+    "boundary":[
+    {
+        "name":     "bTop",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       2.5E-3,
+        "hf":       2.5E-3
+    },
+    {
+        "name":     "bBot",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       -2.50E-3,
+        "hf":       -2.50E-3
+    },
+    {
+        "name":     "beamTop",
+        "type":     "boundary1DBeam",
+        "beamName": "viga",
+        "surface":  "top"
+    },
+    {
+        "name":     "beamBot",
+        "type":     "boundary1DBeam",
+        "beamName": "viga",
+        "surface":  "bot"
+    }],
+
+    "solid":
+    {
+        "name": 		"viga",
+        "formulation": 	"bernoulliEulerBeam",
+        "type": 		"nnn",
+        "section":
+        {
+            "type":	 	"rect",
+            "b": 		1,
+            "h": 		2.0E-4,
+            "g": 		-9.8
+        },
+        "material":
+        {
+            "_comment": " This is a very rigid beam",
+            "name":     "aluminio",
+            "type":     "isoElastic",
+            "E":        1.1E11,
+            "nu":       0.3,
+            "rho":      8.78E3
+        },
+        "solution":
+        {
+            "type":         "modal",
+            "method":       "analytic",
+            "normalize":    "mass",
+            "modes":        4,
+            "damping":      [0.0, 0.0]
+        },
+        "bc":
+        {
+            "type":     "clampedFree",
+            "y0":  0.0,
+            "dy0": 0.0
+        }
+    },
+
+    "flow" :
+    {
+        "name":     		"flujo",
+        "formulation": 		"leakageFlow2D",
+        "type":     		"dualChannel",
+        "accel":    		"no",
+        "units":    		"m",
+        "fluid":
+        {
+            "db": "air"
+        },
+        "thickness": 		1.0,
+        "regions":[
+        {
+            "name":        "channelTop",
+            "type":        "top",
+            "topBoundary": "bTop",
+            "botBoundary": "beamTop"
+        },
+        {
+            "name":        "channelBot",
+            "type":        "bot",
+            "topBoundary": "beamBot",
+            "botBoundary": "bBot"
+        }],
+        "bc" :
+        {
+            "type":			"inletFlowRate",
+            "inlet":
+            {
+                "Q0":    "parametric",
+                "zeta":  1.0
+            },
+            "outlet":
+            {
+                "type": "outFlow",
+                "zeta": 0.0
+            }
+        }
+    },
+
+    "fsi":
+    {
+        "name":         "Tosi Figure 3.1",
+        "formulation":  "lfb1D",
+        "type":         "Tosi"
+    }
+}
