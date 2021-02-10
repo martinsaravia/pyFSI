@@ -62,29 +62,17 @@ class lfb1D(fsiBase):
                 self.norm[i, j] = si.simps(phiTphi[i, j], beam.mesh().x)
 
         # Fill the system Matrices
-        # Mass normalized formulation
-        if self._solid.control()['solution']['normalize'] == "No":
-            for i in range(0, esize):
-                gi = beam.eigen.vectors[i]
-                ki = beam.k()[i] + flow.K()[i]
-                ci = beam.c()[i] + flow.C()[i]
-                mi = beam.m()[i] + flow.M()[i]
-                for j in range(0, esize):
-                    gj = beam.eigen.vectors[j]
-                    self.K[i, j] = -si.simps(ki * gj, beam.mesh().x)
-                    self.C[i, j] = -si.simps(ci * gj, beam.mesh().x)
-                    self.M[i, j] = si.simps(mi * gj, beam.mesh().x)
+        for i in range(0, esize):
+            gi = beam.eigen.vectors[i]
+            ki = beam.k()[i] + flow.K()[i]
+            ci = beam.c()[i] + flow.C()[i]
+            mi = beam.m()[i] + flow.M()[i]
+            for j in range(0, esize):
+                gj = beam.eigen.vectors[j]
+                self.K[i, j] = -si.simps(ki * gj, beam.mesh().x)
+                self.C[i, j] = -si.simps(ci * gj, beam.mesh().x)
+                self.M[i, j] = si.simps(mi * gj, beam.mesh().x)
 
-        elif self._solid.control()['solution']['normalize'] == "mass":
-            for i in range(0, esize):
-                ki = flow.K()[i]
-                ci = flow.C()[i]
-                mi = flow.M()[i]
-                for j in range(0, esize):
-                    gj = beam.eigen.vectors[j] / beam.eigen.vectors[j].normFactor
-                    self.K[i, j] = -si.simps(ki * gj, beam.mesh().x) + beam.K[i, j]
-                    self.C[i, j] = -si.simps(ci * gj, beam.mesh().x) + beam.C[i, j]
-                    self.M[i, j] = si.simps(mi * gj, beam.mesh().x) + beam.M[i, j]
 
         # System Region Vectors
         Gq = flow.Gq()

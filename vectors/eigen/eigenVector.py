@@ -14,7 +14,6 @@ from vectors.field import field
 import numpy as np
 import scipy.integrate as si
 
-
 class eigenVector(field):
     def __new__(cls, nparray, mesh, info=None, normalize='mass', mass=None):
 
@@ -23,17 +22,17 @@ class eigenVector(field):
         # We first cast to be our class type
         # Choose Normalization
         if normalize == 'length':
-            factor = abs((mesh.L))**0.5
-            obj = np.asarray(nparray).view(cls) / factor
+            obj.normFactor = abs((mesh.L))**0.5
+            obj = np.asarray(nparray).view(cls) / fobj.normFactor
         if normalize == 'mass':
-            factor = (1 / si.simps(mass*nparray**2, mesh.x))**0.5
-            obj = np.asarray(nparray).view(cls) * factor
+            obj.normFactor = (1 / si.simps(mass*nparray**2, mesh.x))**0.5
+            obj = np.asarray(nparray).view(cls) * obj.normFactor
         else:
             obj = np.asarray(nparray).view(cls)
 
         # ----- Public attributes ----- #
         obj.info = info
-        obj.normFactor = factor
+
         edgeOrder = 2
         obj.d1 = np.gradient(obj, mesh.x, edge_order=edgeOrder)
         obj.d2 = np.gradient(obj.d1, mesh.x, edge_order=edgeOrder)

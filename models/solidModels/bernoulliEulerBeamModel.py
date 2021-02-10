@@ -266,11 +266,16 @@ class bernoulliEulerBeam(solidModel):
 
             # Choose the normalization method, No is for stiffness based on the
             # fourth derivative of the mode, mass is for k based on the eigenvalue
-            if self._control['solution']['normalize'] == "No":
-                normMethod = None
-            elif self._control['solution']['normalize'] == "mass":
-                print("--> Choosing mass normalization for the beam...")
-                normMethod = "mass"
+            if 'normalize' in self._control['solution']:
+                if self._control['solution']['normalize'] == "mass":
+                    print("--> Choosing mass normalization for the beam...")
+                    normMethod = "mass"
+                else:
+                    print("--> Beam normalization method unknown. Choosing False...")
+                    normMethod = False
+            else:
+                normMethod = False
+
             vectors.append(evec.eigenVector(vector(mesh.x, beta[i]),
                                             mesh,
                                             info="Beam eigenvector " + str(i + 1),
