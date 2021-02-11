@@ -1,7 +1,5 @@
 
-from execution import execution
-
-execution.cleanCase()
-
-case = execution.runCase("transientLFBeam")
+from execution.caseManagement import *
+cleanCase()
+case = runCase("transientLFBeam")
 

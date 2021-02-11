@@ -1,7 +1,7 @@
 # Run the case
-from execution import execution
-execution.cleanCase()
-case = execution.runCase("eigenLFBeam")
+from execution.caseManagement import *
+cleanCase()
+case = runCase("eigenLFBeam")
 
 
 # Plots

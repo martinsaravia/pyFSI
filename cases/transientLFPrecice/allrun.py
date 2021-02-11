@@ -1,5 +1,5 @@
 
-from execution.execution import runCase
+from execution.caseManagement import runCase
 
 solution = runCase("transientLFPrecice")
 
