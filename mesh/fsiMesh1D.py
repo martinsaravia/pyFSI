@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------- #
-#    p    #     version: 0.1
+#    p    #     version: 0.2.0
 #    y    #     date: 02/07/2020
 #    F    #     author: Martin Saravia
 #    S    #     description: 1D Mesh
