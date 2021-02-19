@@ -1,0 +1,154 @@
+
+{
+    "info": "Analysis of critical velocity of Figures 3.2 and 3.3 of Tosi's Thesis",
+
+
+    "execution":
+    {
+        "solver":
+        {
+            "type":         "transient",
+            "integrator":   "RK45-RK45",
+            "coupling":     "explicit",
+            "processes":     1,
+            "rtol":         1E-6,
+            "atol":         1E-6,
+            "maxIter":      10
+        },
+        "time":
+        {
+            "stepping":     "automatic",
+            "startTime":    0,
+            "endTime":      0.1,
+            "deltaT":       1E-3
+        },
+        "debug":"n",
+        "output":
+        {
+            "variables": ["Q0", "U", "V", "A"]
+        }
+    },
+
+
+    "mesh":
+    {
+        "type": "from3Parameters",
+        "xi": 0.0,
+        "xf": 0.1,
+        "dx": 0.002
+    },
+
+
+    "boundary":[
+    {
+        "name":     "bTop",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       2.0E-3,
+        "hf":       5.0E-3
+    },
+    {
+        "name":     "bBot",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       -2.00E-3,
+        "hf":       -5.00E-3
+    },
+    {
+        "name":     "beamTop",
+        "type":     "boundary1DBeam",
+        "beamName": "viga",
+        "surface":  "top"
+    },
+    {
+        "name":     "beamBot",
+        "type":     "boundary1DBeam",
+        "beamName": "viga",
+        "surface":  "bot"
+    }],
+
+    "solid":
+    {
+        "name":         "viga",
+        "formulation":  "bernoulliEulerBeam",
+        "normalize":    "mass",
+        "type":         "nnn",
+        "section":
+        {
+            "type": "rect",
+            "b": 1,
+            "h": 5.0E-4,
+            "g": -9.8
+        },
+        "material":
+        {
+            "_comment": " This is a very rigid beam",
+            "name":     "aluminio",
+            "type":     "isoElastic",
+            "E":        2.1E11,
+            "nu":       0.3,
+            "rho":      32.78E3
+        },
+        "solution":
+        {
+            "type":     "modal",
+            "method":   "analytic",
+            "modes":    4,
+            "damping":  [0.05, 0.03]
+        },
+        "bc":
+        {
+            "type":     "clampedFree",
+            "y0":  0,
+            "dy0": 0
+        }
+    },
+
+    "flow" :
+    {
+        "name":     "flujo",
+        "formulation": "nlLeakageFlow2D",
+        "type":     "dualChannel",
+        "accel":    "no",
+        "units":    "m",
+        "fluid":
+        {
+            "db": "air"
+        },
+        "thickness": 1,
+        "regions":[
+        {
+            "name":        "topChannel",
+            "type":        "top",
+            "topBoundary": "bTop",
+            "botBoundary": "beamTop"
+        },
+        {
+            "name":        "botChannel",
+            "type":        "bot",
+            "topBoundary": "beamBot",
+            "botBoundary": "bBot"
+        }],
+        "bc" :
+        {
+            "type":     "variableInletPressure",
+            "inlet":
+            {
+                "p":    [2,  1.0E4],
+                "zeta":  1.0
+            },
+            "outlet":
+            {
+                "p": 0,
+                "zeta": 0.0
+            }
+        }
+    },
+
+    "fsi":
+    {
+        "name":         "nlTest",
+        "formulation":  "nlLFB1D",
+        "type":         "Tosi"
+    }
+}

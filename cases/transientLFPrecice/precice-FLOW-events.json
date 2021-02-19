@@ -1,0 +1,87 @@
+{
+  "Finalized": "2021-02-07T14:30:43.493",
+  "Initialized": "2021-02-07T14:30:43.423",
+  "Name": "",
+  "Ranks": [
+    {
+      "Finalized": "2021-02-07T14:30:43.493",
+      "Initialized": "2021-02-07T14:30:43.423",
+      "StateChanges": [
+        {
+          "Name": "_GLOBAL",
+          "State": 1,
+          "Timestamp": 0
+        },
+        {
+          "Name": "_GLOBAL",
+          "State": 0,
+          "Timestamp": 69
+        },
+        {
+          "Name": "configure",
+          "State": 1,
+          "Timestamp": 0
+        },
+        {
+          "Name": "configure",
+          "State": 0,
+          "Timestamp": 0
+        },
+        {
+          "Name": "finalize",
+          "State": 1,
+          "Timestamp": 69
+        },
+        {
+          "Name": "finalize",
+          "State": 0,
+          "Timestamp": 69
+        },
+        {
+          "Name": "solver.initialize",
+          "State": 1,
+          "Timestamp": 0
+        },
+        {
+          "Name": "solver.initialize",
+          "State": 0,
+          "Timestamp": 69
+        }
+      ],
+      "Timings": {
+        "_GLOBAL": {
+          "Count": 1,
+          "Data": {},
+          "Max": 69,
+          "Min": 69,
+          "TimeRatio": 1.0,
+          "Total": 69
+        },
+        "configure": {
+          "Count": 1,
+          "Data": {},
+          "Max": 0,
+          "Min": 0,
+          "TimeRatio": 0.0,
+          "Total": 0
+        },
+        "finalize": {
+          "Count": 1,
+          "Data": {},
+          "Max": 0,
+          "Min": 0,
+          "TimeRatio": 0.0,
+          "Total": 0
+        },
+        "solver.initialize": {
+          "Count": 1,
+          "Data": {},
+          "Max": 69,
+          "Min": 69,
+          "TimeRatio": 1.0,
+          "Total": 69
+        }
+      }
+    }
+  ]
+}

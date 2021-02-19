@@ -1,0 +1,122 @@
+
+{
+    "info": "Test file for pyFSI and preCICE and Calculix coupling.",
+
+
+
+    "execution":
+    {
+        "solver":
+        {
+            "type":         "preCICE",
+            "integrator":   "Radau"
+        },
+        "time":
+        {
+            "stepping":     "automatic",
+            "startTime":    0,
+            "endTime":      1,
+            "deltaT":       1E-3
+        }
+    },
+
+    "mesh":
+    {
+        "type": "from3Parameters",
+        "xi": 0.0,
+        "xf": 0.1,
+        "dx": 0.002
+    },
+
+
+    "boundary":[
+    {
+        "name":     "bTop",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       10.0E-3,
+        "hf":       12.0E-3
+    },
+    {
+        "name":     "bBot",
+        "type":     "boundary1DRigid",
+        "method":   "fromLineByTwoPoints",
+        "hi":       -10.00E-3,
+        "hf":       -10.00E-3
+    },
+    {
+        "name":     "Fluid_Top",
+        "type":     "boundary1DFlexible",
+        "method":   "fromLineByTwoPoints",
+        "hi":       2.5E-3,
+        "hf":       2.5E-3
+    },
+    {
+        "name":     "Fluid_Bot",
+        "type":     "boundary1DFlexible",
+        "method":   "fromLineByTwoPoints",
+        "hi":       -2.5E-3,
+        "hf":       -2.5E-3
+    }],
+
+    "solid":
+    {
+        "name":             "solid",
+        "formulation":      "preciceSolid",
+        "type":             "precice",
+        "filename":         "solid",
+        "participant":      "STRUCTURE"
+    },
+
+    "flow" : {
+        "name":             "flujo",
+        "formulation":      "nlLeakageFlow2D",
+        "type":             "dualChannel",
+        "accel":            "no",
+        "units":            "m",
+        "fluid": {
+            "db":           "air"
+        },
+        "thickness":        1,
+        "regions": [
+            {
+                "name":         "topChannel",
+                "type":         "top",
+                "topBoundary":  "bTop",
+                "botBoundary":  "Fluid_Top"
+            },
+            {
+                "name":         "botChannel",
+                "type":         "bot",
+                "topBoundary":  "Fluid_Bot",
+                "botBoundary":  "bBot"
+            }
+        ],
+        "bc": {
+            "type": "variableInletPressure",
+            "inlet": {
+                        "p":    [2, 1.0E4],
+                        "zeta": 1.0
+            },
+            "outlet": {
+                        "p":    0,
+                        "zeta": 0.0
+            }
+        }
+    },
+    "fsi":
+    {
+        "name":         "flow_structure",
+        "formulation":  "preCICE",
+        "meshes": [
+                {
+                    "name":     "Fluid_Top",
+                    "boundary": "Fluid_Top",
+                    "read":     ["Displacements", "Velocities"],
+                    "write":    ["Forces"]
+                }
+            ]
+    }
+}
+
+
