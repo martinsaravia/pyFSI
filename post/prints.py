@@ -58,3 +58,14 @@ def printNumbers(solution):
     nfsi = list(fsi.dimNumbers.values())
     for n in nfsi:
         n.info()
+
+
+def printArray(array):
+    dfvec = pd.DataFrame(array)
+    print(tabulate(dfvec,
+                   headers='keys',
+                   tablefmt='psql',
+                   floatfmt=".3f",
+                   showindex=True,
+                   numalign="decimal",
+                   stralign="center"))

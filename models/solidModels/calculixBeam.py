@@ -1,10 +1,10 @@
 import os, importlib, subprocess, numpy as np
 from pathlib import Path
 
-from models.solidModels.solidModel import *
+from models.solidModels.solidBase import *
 from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
 
-import pycalculix as pyc
+# import pycalculix as pyc
 
 class calculixBeam(object):
 

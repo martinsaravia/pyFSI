@@ -13,13 +13,13 @@
 #   Local Re is the same for all regions. Not as above Eq. 2.30
 #   eta calculation must be checked
 #   Check the he consideration of the beam thickness
-#   Only symmetric regions allows (a single qx0)
+#   Only symmetric regions allowed (a single qx0)
 # --------------------------------------------------------------------------- #
 import sys
 import scipy.integrate as si, numpy as np
-from models.flowModels.flowModel import flowModel
-from properties.dimensionlessNumbers import dimensionlessNumber
-from properties.boundaryLayer import boundaryLayer
+from models.flowModels.flowBase import flowModel
+from models.properties.dimensionlessNumbers import dimensionlessNumber
+from models.properties.boundaryLayer import boundaryLayer
 from mesh.region.fsiRegion1D import fsiRegion1D
 
 class leakageFlow2D(flowModel):
@@ -42,6 +42,9 @@ class leakageFlow2D(flowModel):
         self._xix = None  # Nonlinear profile factor
         self._eta = None  # Derivative of f(Qx) at qx0
         self._bc = control['bc']
+        self._debug = {"smallDx": False,  # Dictionary of debug flags
+                       "equalIn": False}
+
 
         # ----- Procedures ----- #
         self.initRegions(control, mesh, boundary)
@@ -49,36 +52,42 @@ class leakageFlow2D(flowModel):
 
     # Create the region objects
     def initRegions(self, control, mesh, boundary):
-        for region in control['regions']:
-            regionObj = fsiRegion1D(region, mesh, boundary)
-            self.regions.append(regionObj)
+        for region in self.regions:
+            region.update()  # Update to read the initialized channel size
             # regionObj.data['name'] = region['name']
-            regionObj.data['he'] = regionObj.data['s']   # Initial size of the region
-            regionObj.data['he0'] = regionObj.data['he'][0]
-            regionObj.data['he2'] = regionObj.data['he'] ** 2
-            regionObj.data['he3'] = regionObj.data['he'] ** 3
-            regionObj.data['he4'] = regionObj.data['he'] ** 4
-            regionObj.data['hed'] = np.gradient(regionObj.data['he'], self._mesh.x, edge_order=2)
-            regionObj.data['hex'] = si.cumtrapz(1.0 / regionObj.data['he'], self._mesh.x, initial=0.0)
-            regionObj.data['heL'] = si.simps(1.0 / regionObj.data['he'], self._mesh.x)
-            regionObj.data['hexL'] = regionObj.data['hex'] / regionObj.data['heL']
+            region.data['he'] = region.data['s']   # Initial size of the region
+            region.data['he0'] = region.data['he'][0]
+            region.data['he2'] = region.data['he'] ** 2
+            region.data['he3'] = region.data['he'] ** 3
+            region.data['he4'] = region.data['he'] ** 4
+            region.data['hed'] = np.gradient(region.data['he'], self._mesh.x, edge_order=2)
+            region.data['hex'] = si.cumtrapz(1.0 / region.data['he'], self._mesh.x, initial=0.0)
+            region.data['heL'] = si.simps(1.0 / region.data['he'], self._mesh.x)
+            region.data['hexL'] = region.data['hex'] / region.data['heL']
 
             # Store the size of the eigensystem
-            self._size = regionObj.eigen().size
-
+            self._size = region.eigen().size
             # Check for suitable mesh density
-            if (self._mesh.x[1] - self._mesh.x[0]) > regionObj.data['he0']:
-                print("--> WARNING: mesh dx is smaller the channel height for region "
-                      + region['name'] + ". Results may be wrong. ")
+            # if self._debug["smallDx"]:
+            #     if (self._mesh.x[1] - self._mesh.x[0]) > region.data['he0']:
+            #         print("--> WARNING: mesh dx is larger than the channel height for region "
+            #               + region.name + ". Results may be wrong. ")
+            #         self._debug["smallDx"] = False
 
     # Make parameters related to the flow
     def makeDynamics(self, control):
 
         # Flow rate (reads the key Qt that is added to the casecontrol by the solver)
-        self.qx0 = control['bc']['inlet']['Qt']
+        self.qx0 = control['bc']['inlet']['Q0']
 
         # Calculate the dimensionless numbers
-        self.dRef = list(self.regions)[0].data['he0']  # Reference inlet size of one of the two regions (symmetry)
+        # Reference inlet size of one of the two regions (symmetry)
+        if self._debug["smallDx"]:
+            print("--> WARNING! The region inlet size is assumed "
+                  "to be the same for both regions. Check the flow model.")
+            self._debug["smallDx"] = False
+
+        self.dRef = list(self.regions)[0].data['he0']
         self.lRef = self._mesh.L
         self.vRef = self.qx0 / self.dRef
         self.eRef = self.dRef / self.lRef
@@ -90,11 +99,11 @@ class leakageFlow2D(flowModel):
 
         # Nonlinear profile (xix), viscous friction (f0) and derivative of f0 (eta)
         Rd = self.dimNumbers['Rd'].value
-        if Rd < 1E3: # Laminar
+        if Rd < 1:  # Laminar
             self._f0 = 48.0 / Rd
             self._xix = 6.0 / 5.0
             self._eta = -self._f0 / self.qx0
-        else: # Turbulent
+        else:  # Turbulent
             self._f0 = 0.26 * Rd ** -0.24
             self._xix = 1.0
             self._eta = -(0.0624 * Rd**-0.24) / self.qx0
@@ -276,30 +285,5 @@ class leakageFlow2D(flowModel):
         return (si.cumtrapz(term, x, initial=0.0) -
                 si.simps(term, x) * region.data['hexL'])
 
-    # def xxqx0(self, region):  # 2.59 Tosi
-    #     if self._bc['inlet']['type'] == 'flowRate' or self._bc['outlet']['type']=='flowRate':
-    #         print("--> ERROR: Flow rate can only be calculated with both pressure bcs.")
-    #         sys.exit()
-    #     pi = self._bc['inlet']['p']
-    #     po = self._bc['outlet']['p']
-    #     zetai = self._bc['inlet']['zeta']
-    #     zetao = self._bc['outlet']['zeta']
-    #     he0 = region['he'][0]
-    #     heL = region['he'][-1]
-    #     he = region['he']
-    #     # Terms associated to nonlinear profile 2.23, input-output loss 2.45 and
-    #     # viscous friction loss 2.29
-    #     nlLoss = self._xix * 0.5 * (1/heL**2 - 1/he0**2)
-    #     ioLoss = zetao / (2.0 * heL**2) + zetai / (2.0 * he0**2)
-    #     vfLoss = 0.25 * self._f0 * si.simps(1 / he**3, self._mesh.x)
-    #
-    #     self.qx0 = ((pi - po) / (self._fluid['rho'] * (nlLoss + ioLoss + vfLoss)))**0.5
-
-
-
-
-
-
-    
 
 

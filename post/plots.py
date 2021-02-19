@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import matplotlib.pyplot as plt, numpy as np
 import matplotlib.cm as cm
+import scipy.signal as sps
 from matplotlib.animation import FuncAnimation
+import pandas as pd
+from multiprocessing import Pool
 
 plt.rcParams.update({
     "font.family": "serif",
-    "font.size"   : 12,
+    "font.size": 12,
     "figure.figsize": [16, 9],
     "savefig.format": "png",
     "animation.writer": "ffmpeg",
@@ -15,23 +18,35 @@ plt.rcParams.update({
     "legend.loc": 'upper left'
 })
 
+
 # plt.tight_layout()
 
 
+def loadFiles(fileList):
+    n = len(fileList)
+    pool = Pool(2)
+    result = pool.map(np.loadtxt, fileList)
+    pool.close()
+    return result
 
+    # self.axe.set_xticks([])
+    # self.axe.set_yticks([])
+
+
+# Load files in parallel
 class fsiPlot():
     def __init__(self):
         self.fig = plt.gcf()
         self.axe = plt.gca()
+        self.xData = None
+        self.yData = None
         plt.grid(b=True)
-
 
         # plt.rcParams.update({
         #     "text.usetex": True,
         #     "font.family": "sans-serif",
         #     "font.sans-serif": ["Helvetica"]})
         ## for Palatino and other serif fonts use:
-
 
     def set(self,
             fig=False,
@@ -57,43 +72,64 @@ class fsiPlot():
         self.axe.set_ylabel(yLabel)
 
 
-        # self.axe.set_xticks([])
-        # self.axe.set_yticks([])
-
-class pFile(fsiPlot):
-    def __init__(self, file, indexes=None, time='all', factor=1):
+class plotFromFile(fsiPlot):
+    def __init__(self, xFile, yFile, xIndexes=None, yIndexes=None):
         super().__init__()
-        self.factor = factor
-        self.indexes = indexes
-        self.time = time
-        self.data = np.loadtxt(file)
+        data = loadFiles([xFile, yFile])
+
         self.P = []
-        self.x = np.linspace(0, 3.3333, time[1])
-        if time == 'all':
-            for i in indexes:
-                self.P = self.axe.plot(factor * self.data[:, i])
+
+        # Number of plots
+        try:
+            nPlots = abs(yIndexes[1].stop - yIndexes[1].start)
+        except:
+            nPlots = 1
+
+        # Number of x Axes
+        try:
+            xAxes = abs(xIndexes[1].stop - xIndexes[1].start)
+        except:
+            xAxes = 1
+
+
+        self.xData = np.array(data[0])[xIndexes]
+        self.yData = np.array(data[1])[yIndexes]
+
+        if xAxes == 1 and nPlots == 1:
+            print(self.yData)
+            curve, = self.axe.plot(self.xData, self.yData)
+            self.P.append(curve)
+
         else:
-            for i in indexes:
-                curve, = self.axe.plot(self.x, factor * self.data[time[0]:time[1], i])
-                self.P.append(curve)
+            if xAxes == 1:
+                print(1)
+                for i in range(nPlots):
+                    curve, = self.axe.plot(self.xData, self.yData[:, i])
+                    self.P.append(curve)
+            else:
+                print(00)
+                for i in range(nPlots):
+                    curve, = self.axe.plot(self.xData[:, i], self.yData[:, i])
+                    self.P.append(curve)
 
     def update(self, i):
-        for c in self.indexes:
-            self.P[c].set_xdata(self.x[self.time[0]:i])
-            self.P[c].set_ydata(self.factor * self.data[self.time[0]:i, c])
+        for c in self.yIndexes:
+            self.P[c].set_xdata(self.xData[xIndexes[0]:i])
+            self.P[c].set_ydata(self.yData[xIndexes[0]:i, c])
         return self.P
 
+
 class pShape(fsiPlot):
-    def __init__(self, file, time):
+    def __init__(self, xfile, yfile, time):
         super().__init__()
-        self.time = time
-        self.data = np.loadtxt(file)
-        x = np.linspace(0, 0.2, 21)
-        self.P = self.axe.plot(x, self.data[time, :], linewidth=3)
+        self.time = np.loadtxt(xfile)
+        self.data = np.loadtxt(yfile)
+        self.P = self.axe.plot(self.time, self.data[time, :], linewidth=3)
 
     def update(self, i):
         self.P[0].set_ydata(self.data[i, :])
         return self.P[0]
+
 
 class pScatter(fsiPlot):
     def __init__(self, solution):
@@ -109,7 +145,8 @@ class pScatter(fsiPlot):
         esize = solution[0][0].ES.size()
         self.colors = cm.rainbow(np.linspace(0, 1, esize))
         self.data = np.zeros((para['steps'], time['steps'], esize, 2))
-        self.evec = np.zeros((para['steps'], time['steps'], esize, esize), dtype=complex)
+        self.evec = np.zeros((para['steps'], time['steps'], esize, esize),
+                             dtype=complex)
         self.P = self.axe.scatter([], [], edgecolors='k', facecolors='r', s=10)
         for pi, ppf in enumerate(para['p']):  # Parameter loop
             for ti, t in enumerate(time['t']):  # Time loop
@@ -136,7 +173,37 @@ class pScatter(fsiPlot):
         self.P.set_offsets(data)
         self.fig.show()
 
-                
+
+# Class for plotting magnetic flux function taken from FEMM with lua script
+class pFlux(fsiPlot):
+    def __init__(self, filePath, deriv=True):
+        super().__init__()
+        self.data = np.genfromtxt(filePath, delimiter=",", skip_header=3)
+
+        # Flux
+        self.aflx = np.zeros((len(self.data[:, 0]), 3))
+        self.aflx[:, 0] = self.data[:, 0]
+        self.aflx[:, 1] = sps.savgol_filter(self.data[:, 1], 11, 2, deriv=0)
+        self.aflx[:, 2] = self.data[:, 1]
+        # Derivative of the flux
+        self.dflx = np.zeros(
+            (len(self.aflx[:, 0]), 2))  # Derivative of average flux
+        self.dflx[:, 0] = self.aflx[:, 0]  # LENGTH COORDINATE
+        temp = sps.savgol_filter(self.data[:, 1], 21, 2, deriv=1)
+        # Necesito el dx para dividir la derivada porqeu sale calculada tomando dx=1 por defecto
+        dx = self.aflx[1, 0] - self.aflx[0, 0]
+        # Ojo que tira la derivada cambiada de signo
+        self.dflx[:, 1] = -sps.savgol_filter(temp, 11, 2, deriv=0) / dx
+
+        # Choose the flux function or the derivative
+        if deriv:
+            curve, = self.axe.plot(self.dflx[:, 0], self.dflx[:, 1])
+        else:
+            curve, = self.axe.plot(self.aflx[:, 0], self.aflx[:, 1])
+
+        self.P.append(curve)
+
+
 class pBifurcation(fsiPlot):
     def __init__(self, solution, mode0, mode1, var='freq'):
         super().__init__()
@@ -196,15 +263,7 @@ class bifurcationPoint():
         self.yParameter = yPar
         self.modeNumber = neval
 
-
-
-
-
-
-
-
-
-#         
+#
 
 #     if not update:
 #         fig = plt.figure()
@@ -212,12 +271,11 @@ class bifurcationPoint():
 #         colors = cm.rainbow(np.linspace(0, 1, esize))
 #         plt.xlim(-100,100)
 #         plt.ylim(-750,750)
-        
+
 #     # Gather the eigensystems
 #     for key, val in solution.items():
 #         esystems = [s.ES for s in solution[key]]
-        
-        
+
 
 #     for es in esystems:
 #         plt.scatter(np.real(es.evalues()), np.imag(es.evalues()), color=colors)
@@ -226,14 +284,11 @@ class bifurcationPoint():
 #     # plt.xlim(-100,100)
 #     # plt.ylim(0,600)
 #     plt.show()
-    
-    
+
 
 #     modes = 2
 # esize = modes*2+2
 # colors = cm.rainbow(np.linspace(0, 1, esize))
-
-
 
 
 # for key, val in solution.items():

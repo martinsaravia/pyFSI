@@ -16,9 +16,10 @@ import scipy.integrate as si
 
 class boundary1D(metaclass=ABCMeta):
 
-    def __init__(self, mesh, name):
+    def __init__(self, mesh, name, coupled=False):
         # ----- Public attributes ----- #
         self.name = name
+        self.size = len(mesh.x)
         self.y = None  # Location of the boundary
         self.d1 = None  # First derivative
         self.ix = None  # Indefinite integral
@@ -27,11 +28,13 @@ class boundary1D(metaclass=ABCMeta):
         self.ddy = None  # Second time derivative
         self.dyi = None  # Indefinite spatial integral of the first time derivative
         self.ddyi = None  # Indefinite spatial integral of the second time deriv
+        self.isCoupled = coupled  # if the field is coupled with precice or other
 
         # ----- Private attributes ----- #
         self._mesh = mesh
 
     def calculate(self):
+        # Ver que en viga estan recalculadas, eliminar? [xxx]
         self.d1 = np.gradient(self.y, self._mesh.x, edge_order=2)
         self.ix = si.cumtrapz(self.y, self._mesh.x, initial=0.0)
         self.iL = si.simps(self.y, self._mesh.x)
@@ -43,7 +46,19 @@ class boundary1D(metaclass=ABCMeta):
 
     @abstractmethod
     def isFlexible(self):
+        # Es necesaria? Esta agregada como atributo tambien [xxx]
         pass
+
+    @classmethod
+    def fromLineByTwoPoints(cls, mesh, dict, name=None):
+        hi = dict['hi']
+        hf = dict['hf']
+        xvalues = mesh.x
+        yvalues = np.zeros(len(xvalues))
+        slope = (hf - hi) / (xvalues[-1] - xvalues[0])
+        for i, x in enumerate(xvalues):
+            yvalues[i] = slope * x + hi
+        return cls(mesh, name, yvalues)
 
     # ----- Getters ----- #
     def __call__(self):
@@ -54,3 +69,6 @@ class boundary1D(metaclass=ABCMeta):
 
     def __repr__(self):
         return 'boundary1D'
+
+    def write(self):
+        pass

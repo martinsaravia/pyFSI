@@ -27,10 +27,6 @@ def runCase(caseName):
     # Add the time dict to the case dict
     makeTime(caseDict['execution'])
 
-    # Import the solver module
-    solverModule = importlib.import_module('solvers.' +
-                                           caseDict['execution']['solver']['type'])
-
     # Parametric study
     caseDictList = []  # List of dictionaries, one for each parameter configuration
     if caseDict['execution']['isParametric']:
@@ -55,6 +51,10 @@ def runCase(caseName):
     # Solve serial or parallel
     # global progressBar
     # progressBar = tqdm(total=len(caseDictList))
+
+    # Import the solver module
+    solverModule = importlib.import_module('solvers.' +
+                                           caseDict['execution']['solver']['type'])
     solution = []
     # Start the processing and map to the list of input dictionaries
     if "processes" in caseDict['execution']['solver']:  # parallel run

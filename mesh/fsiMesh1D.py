@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------- #
-#    p    #     version: 0.1
+#    p    #     version: 0.2.0
 #    y    #     date: 02/07/2020
 #    F    #     author: Martin Saravia
 #    S    #     description: 1D Mesh
@@ -11,6 +11,7 @@
 #
 # --------------------------------------------------------------------------- #
 import numpy as np
+from abc import ABCMeta, abstractmethod
 # 1D Mesh creation.  We can use different creation methods (@classmethod)
 
 class fsiMesh1D(object):
@@ -39,6 +40,11 @@ class fsiMesh1D(object):
     @classmethod
     def fromCalculix(cls, iDict):
         return 0
+
+
+    @abstractmethod
+    def write(self):
+        pass
 
     def __repr__(self):
         return 'fsiMesh1D '

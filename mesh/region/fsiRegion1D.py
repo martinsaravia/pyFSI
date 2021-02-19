@@ -8,7 +8,7 @@
 # Notes:
 #   This class generates a region from two 1D boundary objects
 #   Only one boundary can be flexible
-#
+# Modify: Add several mesh capability (add name variable and call it from solid or fluid). [xxx]
 # --------------------------------------------------------------------------- #
 
 import numpy as np
@@ -25,7 +25,6 @@ class fsiRegion1D(object):
 
         # ----- Public attributes ----- #
         self.name = control['name']
-        print(control)
         self.type = control['type']
 
         # General container for derivatives, integrals, sizes
@@ -35,8 +34,7 @@ class fsiRegion1D(object):
                      'ds':      np.empty(mesh.size),  # Vel of the size
                      'dds':     np.empty(mesh.size),  # Vel of the size
                      'dsi':     np.empty(mesh.size),  # Vel of the size integral
-                     'ddsi':    np.empty(mesh.size)  # Accel of the size integral
-                     }
+                     'ddsi':    np.empty(mesh.size)}  # Accel of the size integral
 
         # ----- Private attributes ----- #
         self._mesh = mesh   # Reference to the mesh
@@ -92,5 +90,8 @@ class fsiRegion1D(object):
 
     def bot(self):
         return self._bBot
+
+    def boundaries(self):
+        return [self._bTop, self._bBot]
 
 

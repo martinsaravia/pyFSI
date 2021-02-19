@@ -1,4 +1,5 @@
 from mesh.region.boundary1D import *
+from abc import ABCMeta, abstractmethod
 
 class boundary1DRigid(boundary1D):
     def __repr__(self):
@@ -17,21 +18,10 @@ class boundary1DRigid(boundary1D):
         self.dyi = np.zeros(mesh.size)  # Indefinite integral of first time derivative
         self.ddyi = np.zeros(mesh.size)  # Indefinite integral of second time deriv
 
-    # Construct from stragith line by two points
-    @classmethod
-    def fromLineByTwoPoints(cls, mesh, dict, name=None):
-        hi = dict['hi']
-        hf = dict['hf']
-        xvalues = mesh.x
-        yvalues = np.zeros(len(xvalues))
-        slope = (hf - hi) / (xvalues[-1] - xvalues[0])
-        for i, x in enumerate(xvalues):
-            yvalues[i] = slope * x + hi
-        return cls(mesh, name, yvalues)
-
     # Abstract methods
     def update(self):
         pass  # rigid boundaries are not updated
 
     def isFlexible(self):  # The boundary is rigid
         return False
+

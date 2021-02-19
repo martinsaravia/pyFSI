@@ -1,4 +1,5 @@
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 #    p    #     version: 0.1
 #    y    #     date: 02/07/2020
 #    F    #     author: Martin Saravia
@@ -22,7 +23,7 @@ import scipy.optimize as opt
 from scipy import interpolate
 from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
 import models.solidModels.calculixBeam as cx
-from models.solidModels.solidModel import solidModel
+from models.solidModels.solidBase import solidModel
 import scipy.integrate as si
 import matplotlib.pyplot as plt
 
@@ -35,6 +36,10 @@ class bernoulliEulerBeam(solidModel):
 
         # ----- Public attributes ----- #
         self.dof = control['solution']['modes']  # Modal DOFs
+        self.K = np.zeros((self.dof, self.dof))
+        self.C = np.zeros((self.dof, self.dof))
+        self.M = np.zeros((self.dof, self.dof))
+        self.Minv = np.zeros((self.dof, self.dof))
         self.sof = 2 * self.dof
         self.S = np.zeros((self.sof, self.sof)) # State Matrix
         self.F = np.zeros(self.sof)  # Modal load
@@ -96,16 +101,14 @@ class bernoulliEulerBeam(solidModel):
         I = np.identity(dof)
 
         # Linear mass
-        M = I
-        self.Minv = M
+        self.M = I
+        self.Minv = self.M
 
         # Assemble the linear stiffness for self-adjoint operator
-        self.K = np.zeros((dof, dof))
         for i in range(dof):
             self.K[i, i] = self.eigen.values[i] ** 2
 
         # Assemble the damping matrix
-        C = np.zeros((dof, dof))
         if dof > 1:
             s1 =  self._control['solution']['damping'][0]
             s2 = self._control['solution']['damping'][1]
@@ -114,9 +117,10 @@ class bernoulliEulerBeam(solidModel):
             alpha = 2 * ( s2 * w1**2 * w2 - s1 * w1 * w2**2) / (w1**2 - w2**2)
             beta = 2 * ( s1 * w1 - s2 * w2) / (w1**2 - w2**2)
             for i in range(dof):
-                C[i, i] = alpha * M[i, i] + beta * self.K[i, i]
+                self.C[i, i] = alpha * self.M[i, i] + beta * self.K[i, i]
         else:
-            C[0, 0] = 2 * self._control['solution']['damping'][0] * self.eigen.values[0]
+            self.C[0, 0] = 2 * self._control['solution']['damping'][0] * self.eigen.values[0]
+
 
         # Assemble the modal force
         f = np.zeros(dof)
@@ -127,9 +131,8 @@ class bernoulliEulerBeam(solidModel):
         # State Matrix
         self.S[0:dof, dof:sof] = I
         self.S[dof:sof, 0:dof] = -np.dot(self.Minv, self.K)
-        self.S[dof:sof, dof:sof] = -np.dot(self.Minv, C)
+        self.S[dof:sof, dof:sof] = -np.dot(self.Minv, self.C)
 
-        print('ratio', np.dot(self.Minv, self.K), np.dot(self.Minv, C))
 
     # Add a fluid force
     def addedStateModalForce(self, force):
@@ -153,7 +156,7 @@ class bernoulliEulerBeam(solidModel):
     def c(self):  # Damping vector
         c = np.empty(len(self.eigen.values), dtype=object)
         for i, val in enumerate(c):
-            c[i] = self._control['m'] * (self._control['solution']['damping'] *
+            c[i] = self._control['m'] * (self._control['solution']['damping'][0] *
                                          self.eigen.values[i] * self.eigen.vectors[i])
         return c
 
@@ -221,7 +224,10 @@ class bernoulliEulerBeam(solidModel):
         self.output.append(open(self._execution['paths']['solidPath'] / 'da.out', 'w'))
         self.output.append(open(self._execution['paths']['solidPath'] / 'dda.out', 'w'))
 
-
+        # Save the mesh
+        self.output.append(open(self._execution['paths']['solidPath'] / 'x.out', 'w'))
+        self.output[8].write(" ".join(map(str, self._mesh.x)) + '\n')
+        self.output[8].close()
 
         # Initial conditions
         # y0 = np.zeros(len(self._mesh.x))  # Initial position
@@ -257,10 +263,24 @@ class bernoulliEulerBeam(solidModel):
                   / (pars['material']['rho'] * pars["A"])) ** 0.5
             values.append(eval.eigenValue(beta[i] ** 2 * cc))
             # Eigenvectors
+
+            # Choose the normalization method, No is for stiffness based on the
+            # fourth derivative of the mode, mass is for k based on the eigenvalue
+            if 'normalize' in self._control['solution']:
+                if self._control['solution']['normalize'] == "mass":
+                    print("--> Choosing mass normalization for the beam...")
+                    normMethod = "mass"
+                else:
+                    print("--> Beam normalization method unknown. Choosing False...")
+                    normMethod = False
+            else:
+                normMethod = False
+
             vectors.append(evec.eigenVector(vector(mesh.x, beta[i]),
                                             mesh,
                                             info="Beam eigenvector " + str(i + 1),
-                                            normalize='mass', mass=self._control['m']))
+                                            normalize=normMethod,
+                                            mass=self._control['m']))
 
         # Create the eigensystem
         eigenSystem = esys.eigenSystemVector(values, vectors)

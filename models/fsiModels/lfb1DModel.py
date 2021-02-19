@@ -3,18 +3,19 @@
 import numpy as np, scipy.integrate as si
 from vectors.eigen import eigenSystem as es
 import copy
-from models.fsiModels.fsiModel import fsiModel
-from properties.dimensionlessNumbers import dimensionlessNumber
+from models.fsiModels.fsiBase import fsiBase
+from models.properties.dimensionlessNumbers import dimensionlessNumber
 
-class lfb1D(fsiModel):
+class lfb1D(fsiBase):
     def __repr__(self):
         return 'lfb1D '
 
     def __init__(self, execution, control, beam, flow):
         super().__init__(execution, control, beam, flow)
+        print("--> Warning: Region names are hardcoded...")
 
         # Time and parametric info
-        self.ti = execution['time']['ti']
+        # self.ti = execution['time']['ti']
         #self.pi = execution['parameters']['pi']
 
         # Size of the state-space eigen matrix
@@ -39,6 +40,11 @@ class lfb1D(fsiModel):
         self.S = np.zeros((self._size, self._size))  # System matrix
         self.ES = None
 
+        # Initialize the eigenvalues and eigenvectors output
+        self.output.append(open(self._execution['paths']['fsiPath'] / 'realValues.out',  'a+'))
+        self.output.append(open(self._execution['paths']['fsiPath'] / 'imagValues.out', 'a+'))
+        self.output.append(open(self._execution['paths']['fsiPath'] / 'vectors.out', 'a+'))
+
         # Assemble the fsi modal matrices K, C and M
         self.assemble(beam, flow)
 
@@ -59,18 +65,22 @@ class lfb1D(fsiModel):
         # Fill the system Matrices
         for i in range(0, esize):
             gi = beam.eigen.vectors[i]
-            ki = beam.K()[i] + flow.K()[i]
-            ci = beam.C()[i] + flow.C()[i]
-            mi = beam.M()[i] + flow.M()[i]
+            ki = beam.k()[i] + flow.K()[i]
+            ci = beam.c()[i] + flow.C()[i]
+            mi = beam.m()[i] + flow.M()[i]
+
+            # Galerkin discretization
             for j in range(0, esize):
                 gj = beam.eigen.vectors[j]
                 self.K[i, j] = -si.simps(ki * gj, beam.mesh().x)
                 self.C[i, j] = -si.simps(ci * gj, beam.mesh().x)
                 self.M[i, j] = si.simps(mi * gj, beam.mesh().x)
 
+
         # System Region Vectors
-        self.Gt = flow.Gq()['channelTop']
-        self.Gb = flow.Gq()['channelBot']
+        Gq = flow.Gq()
+        self.Gt = Gq['channelTop']
+        self.Gb = Gq['channelBot']
         for i in range(0, esize):
             gi = beam.eigen.vectors[i]
             self.Tt[i] = si.simps(flow.Tf()['channelTop'] * gi, beam.mesh().x)
@@ -149,8 +159,18 @@ class lfb1D(fsiModel):
         self.dimNumbers['Gr'] = gapRatio(self)
         self.dimNumbers['Vp'] = viscousParameter(self)
 
-    def evaluate():
-        pass # Abstract
+
+    def finish(self):
+        super().finish()
+
+    def write(self, solution):
+        # Write the eigenvalues and eigenvectors of the FSI system
+        realValues = np.real(solution.evalues())
+        imagValues = np.imag(solution.evalues())
+        self.output[0].write(" ".join(map(str, realValues)) + '\n')
+        self.output[1].write(" ".join(map(str, imagValues)) + '\n')
+        self.output[2].write(" ".join(map(str, solution.evectors())) + '\n')
+
 
 
 # Dimensional numbers of this model

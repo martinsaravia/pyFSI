@@ -1,11 +1,10 @@
-# pyFSI v0.1.0
+# pyFSI v0.2.0
 
-This is the first version of pyFSI, a code for solving fluid-structure interaction problems.
+This is the second version of pyFSI, a code for solving fluid-structure interaction problems.
 
 # Usage
 
-Create a folder containing an input file under the cases directory.
+Create a folder in the cases directory containing the .json input file and an allrun.py which executes the solver. 
 
-Set the name of the file in run.py
+Follow the examples in the case directory. Currently we support three type of analysis: eigenvalue extraction, nonlinear transient and preCICE-Calculix-pyFSI transient. 
 
-Execute run.py

@@ -1,3 +1,4 @@
+
 from post.plots import *
 import matplotlib.animation as animation
 from matplotlib.animation import FFMpegWriter
@@ -5,15 +6,20 @@ from matplotlib.animation import FFMpegWriter
 class pAnimation():
     def __init__(self,
                  P,
+                 tfilePath,
                  name="animation",
-                 interval=2,
-                 frames=100,
+                 interval=10,
+                 frames='all',
                  xlim=False,
                  ylim=False):
 
         self.P = P # The plot object
+        self.time = np.loadtxt(tfilePath)
         self.interval = interval
-        self.frames = frames
+        if frames == 'all':
+            self.frames = len(self.time)
+        else:
+            self.frames = frames
         self.animate()
 
     def animate(self):
