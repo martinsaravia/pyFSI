@@ -81,6 +81,7 @@ class lfb1D(fsiBase):
         Gq = flow.Gq()
         self.Gt = Gq['channelTop']
         self.Gb = Gq['channelBot']
+        # Galerkin discretization
         for i in range(0, esize):
             gi = beam.eigen.vectors[i]
             self.Tt[i] = si.simps(flow.Tf()['channelTop'] * gi, beam.mesh().x)
