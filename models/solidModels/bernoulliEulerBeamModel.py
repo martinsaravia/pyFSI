@@ -17,15 +17,15 @@
 # Optimize:
 #   Delete info from dy and ddy
 # --------------------------------------------------------------------------- #
-
 import numpy as np
 import scipy.optimize as opt
 from scipy import interpolate
-from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
-import models.solidModels.calculixBeam as cx
-from models.solidModels.solidBase import solidModel
 import scipy.integrate as si
 import matplotlib.pyplot as plt
+
+from pyFSI.vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
+import pyFSI.models.solidModels.calculixBeam as cx
+from pyFSI.models.solidModels.solidBase import solidModel
 
 class bernoulliEulerBeam(solidModel):
     def __repr__(self):
@@ -215,17 +215,17 @@ class bernoulliEulerBeam(solidModel):
         self.calcNumbers()
 
         # Initialize the output files
-        self.output.append(open(self._execution['paths']['solidPath'] / 'yTop.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'yMid.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'yBot.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'dyMid.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'ddyMid.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'a.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'da.out', 'w'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'dda.out', 'w'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'yTop.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'yMid.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'yBot.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'dyMid.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'ddyMid.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'a.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'da.out', 'a+'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'dda.out', 'a+'))
 
         # Save the mesh
-        self.output.append(open(self._execution['paths']['solidPath'] / 'x.out', 'w'))
+        self.output.append(open(self._execution['paths']['solidPath'] / 'x.out', 'a+'))
         self.output[8].write(" ".join(map(str, self._mesh.x)) + '\n')
         self.output[8].close()
 

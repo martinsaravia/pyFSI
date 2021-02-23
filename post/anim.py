@@ -1,7 +1,8 @@
 
-from post.plots import *
 import matplotlib.animation as animation
 from matplotlib.animation import FFMpegWriter
+
+from pyFSI.post.plots import *
 
 class pAnimation():
     def __init__(self,

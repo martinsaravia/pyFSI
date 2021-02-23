@@ -1,6 +1,8 @@
-from solvers.solverBase import solverBase
 import scipy.integrate as si
 import numpy as np
+
+from pyFSI.solvers.solverBase import solverBase
+
 
 # Solver for transient FSI simulations
 class transient(solverBase):
@@ -13,7 +15,7 @@ class transient(solverBase):
         tspan = np.array([time['startTime'], time['startTime'] + time['deltaT']])
         dt = time['deltaT']
         while tspan[1] <= time['endTime']:
-            print("-> Solving for time: ", tspan[1])
+            print("\n", "Solving for time:", tspan[1])
             self.advance(tspan)
             tspan += dt
         self.finish()
@@ -48,5 +50,5 @@ class transient(solverBase):
         self.write(tspan[1])
 
     def write(self, t):
-        print("---> Writing results for time ", t)
+        print("---> Writing results")
         self.fsi.write()

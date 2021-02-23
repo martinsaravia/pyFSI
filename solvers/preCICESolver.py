@@ -11,10 +11,11 @@
 # --------------------------------------------------------------------------- #
 
 import importlib, shutil, os, pathlib
-from solvers.solverBase import solverBase
 import scipy.integrate as si
 import numpy as np
 import precice as prc
+
+from pyFSI.solvers.solverBase import solverBase
 
 
 # Solver for transient FSI simulations

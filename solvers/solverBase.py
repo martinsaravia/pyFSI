@@ -9,7 +9,7 @@
 import importlib
 from abc import ABCMeta, abstractmethod
 
-from mesh.fsiMesh1D import fsiMesh1D
+from pyFSI.mesh.fsiMesh1D import fsiMesh1D
 
 
 class solverBase:

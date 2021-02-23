@@ -1,6 +1,6 @@
 from abc import ABCMeta
-from models.properties.materialProperties import solids as dataBase
-from models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.models.properties.materialProperties import solids as dataBase
+from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
 
 class solidModel(metaclass=ABCMeta):
     def __repr__(self):
@@ -47,5 +47,6 @@ class solidModel(metaclass=ABCMeta):
         return self._material
 
     def finish(self):
+        print("closing fil.")
         for i in self.output:
             i.close()  # Close all files

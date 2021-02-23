@@ -11,13 +11,15 @@
 # --------------------------------------------------------------------------- #
 # Change the system matrix.
 # Corrected the position of G, Small acceleration and changed the sign of Tb
-
-import numpy as np, scipy.integrate as si
-from vectors.eigen import eigenSystem as es
 import copy
-from models.fsiModels.fsiBase import fsiBase
-from models.properties.dimensionlessNumbers import dimensionlessNumber
+import numpy as np
 import pandas as pd
+import scipy.integrate as si
+
+from pyFSI.models.fsiModels.fsiBase import fsiBase
+from pyFSI.models.properties.dimensionlessNumbers import dimensionlessNumber
+from pyFSI.vectors.eigen import eigenSystem as es
+
 
 class nlLFB1D(fsiBase):
     def __repr__(self):

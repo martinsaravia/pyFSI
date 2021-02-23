@@ -1,5 +1,4 @@
-from mesh.region.boundary1D import *
-from abc import ABCMeta, abstractmethod
+from pyFSI.mesh.region.boundary1D import *
 
 class boundary1DRigid(boundary1D):
     def __repr__(self):

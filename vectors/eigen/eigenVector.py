@@ -10,9 +10,10 @@
 #   Note the this class inherits from field, which inherits from np.ndarray
 #   Not strictly neccessary, but helps to understand inheritance (sorry)
 # --------------------------------------------------------------------------- #
-from vectors.field import field
 import numpy as np
 import scipy.integrate as si
+
+from pyFSI.vectors.field import field
 
 class eigenVector(field):
     def __new__(cls, nparray, mesh, info=None, normalize='mass', mass=None):

@@ -19,14 +19,14 @@
 # --------------------------------------------------------------------------- #
 
 from abc import ABC
-
 import numpy as np
 import scipy.integrate as si
-from mesh.region.fsiRegion1D import fsiRegion1D
-from models.flowModels.flowBase import flowModel
-from models.properties.boundaryLayer import boundaryLayer
-from vectors.eigen.eigenVector import eigenVector
-from models.properties.dimensionlessNumbers import ReynoldsNumber
+
+from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
+from pyFSI.models.flowModels.flowBase import flowModel
+from pyFSI.models.properties.boundaryLayer import boundaryLayer
+from pyFSI.vectors.eigen.eigenVector import eigenVector
+from pyFSI.models.properties.dimensionlessNumbers import ReynoldsNumber
 
 class nlLeakageFlow2D(flowModel, ABC):
     def __repr__(self):
@@ -75,12 +75,12 @@ class nlLeakageFlow2D(flowModel, ABC):
         # Output
         bufferSize =  1
         self.output = []
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'Q0.out',  'w', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'dQ0.out', 'w', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'p0.out',  'w', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'pIn.out', 'w', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'v0.out',  'w', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'time.out', 'w',buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'Q0.out',  'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'dQ0.out', 'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'p0.out',  'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'pIn.out', 'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'v0.out',  'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'time.out', 'a+',buffering=bufferSize))
 
 
     # Flow rate equation initial condition
@@ -118,7 +118,7 @@ class nlLeakageFlow2D(flowModel, ABC):
                 break
 
         if not convergence[0] and not convergence[1]:
-            raise ValueError("The fluid initial condition has not converged!")
+            raise ValueError("     ERROR: The fluid initial condition has not converged!")
 
     def update(self,  time, state):
         self._ti = time

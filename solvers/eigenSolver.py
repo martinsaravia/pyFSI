@@ -1,6 +1,7 @@
 import numpy as np
-from vectors.eigen import eigenSystem as es
-from solvers.solverBase import solverBase
+
+from pyFSI.vectors.eigen import eigenSystem as es
+from pyFSI.solvers.solverBase import solverBase
 
 class eigen(solverBase):
     def __init__(self, fsi):

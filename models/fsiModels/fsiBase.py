@@ -1,4 +1,4 @@
-from models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
 from abc import ABC, abstractmethod
 
 class fsiBase(ABC):

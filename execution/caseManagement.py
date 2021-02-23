@@ -8,34 +8,42 @@
 # Notes:
 # Available functions are readCase, cleanCase and runCase
 # --------------------------------------------------------------------------- #
-import importlib, json, pathlib, sys, shutil
+import importlib
+import json
+import pathlib
+import shutil
+import sys
+import os
 import time as tt
 from copy import deepcopy
-from execution.utilities import banner
-from execution.objectCreation import *
+from pyFSI.execution.objectCreation import *
+from pyFSI.execution.utilities import banner
 
 
 def runCase(caseName):
-
-    banner("pyFSI v0.2 - Martin Saravia 21-12-2020")
+    banner("pyFSI v0.2.1 - Martin Saravia 23-2-2021")
 
     # Timing starts
     start = tt.perf_counter()
 
-    # Read the case file
-    caseDict = readCase(caseName)
+    # Get the path to the caller locatiion
+    casePath = pathlib.Path(os.path.abspath(caseName).rsplit('/', 1)[0])# Rsplit cut the name of the file from the Path (added by os)
+    print("Running pyFSI case from: ", casePath)
+
+   # Read the case file
+
+    caseDict = readCase(casePath, caseName)
 
     # Create the fsi object list from the original dictionary (input file)
     fsiObjects = createFSIObjects(caseDict)
 
     # Create the case list (contains solver objects, which have a solution)
-    print( "------------------------------------------------------------------------")
-    print("Solving...")
+    print("Calling the solver...")
     case = []
     for fsi in fsiObjects:
         # Create the solver object and solve the case, the solver has a solution
         solverType = fsi.execution()['solver']['type']
-        solverModule = importlib.import_module('solvers.' + solverType + 'Solver')
+        solverModule = importlib.import_module('pyFSI.solvers.' + solverType + 'Solver')
         solver = getattr(solverModule, solverType)(fsi)
         solver.solve()
         case.append(solver)
@@ -48,10 +56,12 @@ def runCase(caseName):
     return case
 
 # Read the case file
-def readCase(caseName):
-    casePath = pathlib.Path(__file__).parent.absolute() / ".." / "cases" / caseName
-    caseFile = caseName + ".json"
-    with open(casePath / caseFile, 'r') as f:
+def readCase(casePath, caseName):
+    # casePath = pathlib.Path(__file__).parent.absolute() / ".." / "cases" / caseName
+    fileName = caseName + ".json"
+    caseFile = casePath / fileName
+
+    with open(caseFile, 'r') as f:
         caseDict = json.load(f)  # Load the input file
 
     # Add paths to the execution dictionary
@@ -68,7 +78,10 @@ def readCase(caseName):
 
     return caseDict
 
-def cleanCase():
-    shutil.rmtree("solid", ignore_errors=True)
-    shutil.rmtree("flow", ignore_errors=True)
-    shutil.rmtree("fsi", ignore_errors=True)
+def cleanCase(caseName):
+    # Get the path to the caller locatiion
+    casePath = pathlib.Path(os.path.abspath(caseName).rsplit('/', 1)[0])# Rsplit cut the name of the file from the Path (added by os)
+    print("Cleaning the case at:", casePath)
+    shutil.rmtree(casePath / "solid", ignore_errors=True)
+    shutil.rmtree(casePath / "flow", ignore_errors=True)
+    shutil.rmtree(casePath / "fsi", ignore_errors=True)

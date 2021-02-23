@@ -1,7 +1,14 @@
 # Run the case
-from execution.caseManagement import *
-cleanCase()
-case = runCase("eigenLFBeam")
+from pyFSI.execution.caseManagement import *
+
+
+# Define case name and location
+caseName = "eigenLFBeam"
+casePath = pathlib.Path(__file__).parent.absolute()
+
+# Clean and run
+cleanCase(casePath)
+case = runCase(casePath, caseName)
 
 
 # Plots

@@ -23,11 +23,11 @@ class fsiMesh1D(object):
         self.size = len(self.x)  # number of sampling points
         self.L = self.x[-1] - self.x[0]  # Length of the 1D domain
 
-
     # Factory Methods:
     # Here the @classmethods act as different constructors, Note that we also
     # use default arguments in __init__ to flexibilize the constructors
     # Construct from 3 parameters
+
     @classmethod
     def from3Parameters(cls, iDict):
         xi = iDict['xi']

@@ -1,7 +1,9 @@
-from models.properties.materialProperties import constants
-from models.properties.dimensionlessNumbers import ReynoldsNumber
 from tabulate import tabulate
 import numpy as np
+
+from pyFSI.models.properties.materialProperties import constants
+from pyFSI.models.properties.dimensionlessNumbers import ReynoldsNumber
+
 
 class boundaryLayer:
     def __init__(self, flow, xPosition=1.0):

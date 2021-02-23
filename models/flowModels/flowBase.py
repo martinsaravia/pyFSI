@@ -11,9 +11,9 @@
 #
 # --------------------------------------------------------------------------- #
 from abc import ABCMeta, abstractmethod
-from models.properties.materialProperties import fluids as db
-from models.properties.dimensionlessNumbers import makeDimensionlessNumbers
-from mesh.region.fsiRegion1D import fsiRegion1D
+from pyFSI.models.properties.materialProperties import fluids as db
+from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
 # Base class for the fluid models
 
 class flowModel(metaclass=ABCMeta):

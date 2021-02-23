@@ -1,10 +1,11 @@
 # Change the system matrix.
 # Corrected the position of G, Small acceleration and changed the sign of Tb
-import numpy as np, scipy.integrate as si
-from vectors.eigen import eigenSystem as es
 import copy
-from models.fsiModels.fsiBase import fsiBase
-from models.properties.dimensionlessNumbers import dimensionlessNumber
+import numpy as np, scipy.integrate as si
+
+from pyFSI.vectors.eigen import eigenSystem as es
+from pyFSI.models.fsiModels.fsiBase import fsiBase
+from pyFSI.models.properties.dimensionlessNumbers import dimensionlessNumber
 
 class lfb1D(fsiBase):
     def __repr__(self):
@@ -12,7 +13,7 @@ class lfb1D(fsiBase):
 
     def __init__(self, execution, control, beam, flow):
         super().__init__(execution, control, beam, flow)
-        print("--> Warning: Region names are hardcoded...")
+        print("     WARNING: Region names are hardcoded.")
 
         # Time and parametric info
         # self.ti = execution['time']['ti']

@@ -1,4 +1,4 @@
-from mesh.region.boundary1D import *
+from pyFSI.mesh.region.boundary1D import *
 
 class boundary1DFlexible(boundary1D):
     def __repr__(self):

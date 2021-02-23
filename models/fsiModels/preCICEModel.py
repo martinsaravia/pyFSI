@@ -1,5 +1,6 @@
-from models.fsiModels.fsiBase import fsiBase
 import precice as prc
+
+from pyFSI.models.fsiModels.fsiBase import fsiBase
 
 class preCICE(fsiBase):
     def __repr__(self):
