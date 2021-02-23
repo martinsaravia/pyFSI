@@ -1,7 +1,18 @@
 
-from execution.caseManagement import runCase
+import os
+from pyFSI.execution.caseManagement import *
 
-solution = runCase("transientLFPrecice")
+# Define case name and location
+caseName = "transientLFPrecice"
+
+
+# Clean and run
+cleanCase(caseName)
+case = runCase(caseName)
+
+# Run the plots file
+#os.system("python3 plots.py 1")
+exec(open("plots.py").read()) # Equivalent
 
 
 

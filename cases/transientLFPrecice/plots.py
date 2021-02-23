@@ -1,6 +1,6 @@
 import pathlib
 
-from post.anim import *
+from pyFSI.post.anim import *
 
 
 # plt.figure()
