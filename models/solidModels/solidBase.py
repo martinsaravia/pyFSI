@@ -47,6 +47,5 @@ class solidModel(metaclass=ABCMeta):
         return self._material
 
     def finish(self):
-        print("closing fil.")
         for i in self.output:
             i.close()  # Close all files
