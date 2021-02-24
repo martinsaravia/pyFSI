@@ -136,6 +136,7 @@ class nlLeakageFlow2D(flowModel, ABC):
             tpf = ((time - self._execution['time']['startTime']) /
                    (self._execution['time']['endTime'] - self._execution['time']['startTime']))
             self._pIn = pDict['inlet']['p'][0] + tpf * (pDict['inlet']['p'][-1] - pDict['inlet']['p'][0])
+
             self._pOut = pDict['outlet']['p']
             self.Dp = self._pOut - self._pIn
 

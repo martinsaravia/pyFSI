@@ -91,23 +91,20 @@ class plotFromFile(fsiPlot):
         except:
             xAxes = 1
 
-
         self.xData = np.array(data[0])[xIndexes]
         self.yData = np.array(data[1])[yIndexes]
 
+
         if xAxes == 1 and nPlots == 1:
-            print(self.yData)
             curve, = self.axe.plot(self.xData, self.yData)
             self.P.append(curve)
 
         else:
             if xAxes == 1:
-                print(1)
                 for i in range(nPlots):
                     curve, = self.axe.plot(self.xData, self.yData[:, i])
                     self.P.append(curve)
             else:
-                print(00)
                 for i in range(nPlots):
                     curve, = self.axe.plot(self.xData[:, i], self.yData[:, i])
                     self.P.append(curve)
@@ -263,41 +260,4 @@ class bifurcationPoint():
         self.yParameter = yPar
         self.modeNumber = neval
 
-#
 
-#     if not update:
-#         fig = plt.figure()
-#         ax = plt.axes()
-#         colors = cm.rainbow(np.linspace(0, 1, esize))
-#         plt.xlim(-100,100)
-#         plt.ylim(-750,750)
-
-#     # Gather the eigensystems
-#     for key, val in solution.items():
-#         esystems = [s.ES for s in solution[key]]
-
-
-#     for es in esystems:
-#         plt.scatter(np.real(es.evalues()), np.imag(es.evalues()), color=colors)
-#         print(np.real(es.evalues()[0:esize]))
-#     print("---------------------------------")
-#     # plt.xlim(-100,100)
-#     # plt.ylim(0,600)
-#     plt.show()
-
-
-#     modes = 2
-# esize = modes*2+2
-# colors = cm.rainbow(np.linspace(0, 1, esize))
-
-
-# for key, val in solution.items():
-#     esystems = [s.ES for s in solution[key]]
-
-#     for es in esystems:
-#         plt.scatter(np.real(es.evalues()), np.imag(es.evalues()), color=colors)
-#         print(np.real(es.evalues()[0:esize]))
-#     print("---------------------------------")
-#     # plt.xlim(-100,100)
-#     # plt.ylim(0,600)
-#     plt.show()

@@ -4,9 +4,13 @@ This is the second version of pyFSI, a code for solving fluid-structure interact
 
 Currently we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlinear Leakege Flow and preciceCoupling.
 
-## Installation
-* Clone the repository to your computer. 
+## Dependencies
+* Python 3
+* ffmpeg for rendering video files `sudo apt get install ffmpeg
+* preCICE
 
+## Installation
+* Clone the repository to your computer.
 * Edit your .bashrc and change the file limit adding `ulimit -n 2048`
 
 ## Usage

@@ -68,9 +68,9 @@ def readCase(casePath, caseName):
     paths = {}
     paths['caseName'] = caseName
     paths['casePath'] = casePath
-    paths['solidPath'] = casePath / "solid/"
-    paths['fluidPath'] = casePath / "fluid/"
-    paths['fsiPath'] = casePath / "fsi/"
+    paths['solidPath'] = casePath / "solid"
+    paths['fluidPath'] = casePath / "flow"
+    paths['fsiPath'] = casePath / "fsi"
     paths['solidPath'].mkdir(parents=True, exist_ok=True)
     paths['fluidPath'].mkdir(parents=True, exist_ok=True)
     paths['fsiPath'].mkdir(parents=True, exist_ok=True)
