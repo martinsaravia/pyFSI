@@ -31,6 +31,15 @@ Execute in a shell `ulimit -n 2048, or increase the limits until the errors diss
 
 Note that closing the file after creation is expensive, so it is preferred to let it opened. 
 
+### Running from PyCharm allrun.py cannot find pyFSI
+This does not happen if we run from the command line as `python3 allrun.py`
+
+#### Solution
+Start PyCharm from a terminal in which .bashrc has added the folder where pyFSI is located to PYTHOPATH. 
+
 
 ## Tickets
-* Fix the file limit problem. 
+* Fix the file limit problem.  
+
+
+## Installation of preCICE and Calculix

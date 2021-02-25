@@ -198,7 +198,6 @@ class leakageFlow2D(flowModel):
             t0 = self._bc['inlet']['zeta'] / r['he2'][0]
             t1 = self._bc['outlet']['zeta'] / r['he2'][-1]
             tio = (t0 + t1) * r['hexL'] - t0
-
             # Output as dictionary, one vector per region
             Tf[region.name] = self._th * self._fluid['rho'] * self.qx0 * (tnl + tio + tvf)
 
