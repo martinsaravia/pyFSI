@@ -45,7 +45,7 @@ Start PyCharm from a terminal in which .bashrc has added the folder where pyFSI 
 ## Installation of preCICE and Calculix
 ### Precice core library
 This is the main C++ library. You can find the installation steps in https://www.precice.org/installation-overview.html
-Try something like: 
+
 `wget https://github.com/precice/precice/releases/download/v2.2.0/libprecice2_2.2.0_focal.deb
 sudo apt install ./libprecice2_2.2.0_focal.deb` 
 
@@ -84,5 +84,13 @@ sudo make -j 4`
 #### Check
 You should now have a new executable ccx_preCICE in the bin/ folder of the adapter. You may move this file to a path known by your system, or add this to your PATH (careful when doing this!).
 
+`cd /opt/calculix-adapter-master/bin
+sudo cp ccx_preCICE /usr/bin/.`
+
+Probably it would be neccessary to move calculix-adapter-master to the Calculix directory
+and also rename it to calculix-adapter.
+
+`sudo mv opt/calculix-adapter-master opt/calculix-adapter
+sudo mv opt/calculix-adapter /opt/CalculiX/.`
 
 

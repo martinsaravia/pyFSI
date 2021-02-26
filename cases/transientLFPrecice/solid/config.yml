@@ -1,0 +1,10 @@
+participants:
+
+    STRUCTURE:
+        interfaces:
+        - nodes-mesh: Solid_Top
+          patch: Top_Interface
+          read-data: [Forces]
+          write-data: [Displacements, Velocities]
+
+precice-config-file: ../precice-config.xml

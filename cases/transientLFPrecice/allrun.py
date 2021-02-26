@@ -7,7 +7,7 @@ caseName = "transientLFPrecice"
 
 
 # Clean and run
-cleanCase(caseName)
+cleanCase(caseName, solid=False)
 case = runCase(caseName)
 
 # Run the plots file

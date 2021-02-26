@@ -78,10 +78,13 @@ def readCase(casePath, caseName):
 
     return caseDict
 
-def cleanCase(caseName):
+def cleanCase(caseName, solid=True, flow=True, fsi=True):
     # Get the path to the caller locatiion
     casePath = pathlib.Path(os.path.abspath(caseName).rsplit('/', 1)[0])# Rsplit cut the name of the file from the Path (added by os)
     print("Cleaning the case at:", casePath)
-    shutil.rmtree(casePath / "solid", ignore_errors=True)
-    shutil.rmtree(casePath / "flow", ignore_errors=True)
-    shutil.rmtree(casePath / "fsi", ignore_errors=True)
+    if solid:
+        shutil.rmtree(casePath / "solid", ignore_errors=True)
+    if flow:
+        shutil.rmtree(casePath / "flow", ignore_errors=True)
+    if fsi:
+        shutil.rmtree(casePath / "fsi", ignore_errors=True)
