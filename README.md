@@ -43,3 +43,46 @@ Start PyCharm from a terminal in which .bashrc has added the folder where pyFSI 
 
 
 ## Installation of preCICE and Calculix
+### Precice core library
+This is the main C++ library. You can find the installation steps in https://www.precice.org/installation-overview.html
+Try something like: 
+`wget https://github.com/precice/precice/releases/download/v2.2.0/libprecice2_2.2.0_focal.deb
+sudo apt install ./libprecice2_2.2.0_focal.deb` 
+
+### Python bindings
+The Python bindings are needed by the pyFSI adapter (who couples the fields). The installation procedure is at https://www.precice.org/installation-bindings-python.
+For short `pip3 install --user pyprecice` 
+
+### Calculix
+The full installation procedure can be found at https://www.precice.org/adapter-calculix-get-calculix.html.
+A brief summary is given next.
+
+#### Install Calculix dependecies
+`sudo apt install libarpack2-dev libspooles-dev libyaml-cpp-dev`
+
+#### Get Calculix 
+`cd /opt
+sudo wget http://www.dhondt.de/ccx_2.16.src.tar.bz2
+sudo tar xvjf ccx_2.16.src.tar.bz2 
+sudo rm ccx_2.16.src.tar.bz2`
+
+#### Get the adapter and modify it according to your system
+These are the commands to get the adapter and modify the Makefile to point to the right location of Calculix (/opt) instead of home. 
+`cd /opt
+sudo wget https://github.com/precice/calculix-adapter/archive/master.zip 
+sudo unzip master.zip 
+sudo rm master.zip
+cd calculix-adapter-master
+sudo gedit Makefile
+`
+Change the location of Calculix (variable CCX)
+
+#### Compile Calculix with the adapter
+`cd /opt/calculix-adapter-master
+sudo make -j 4`
+
+#### Check
+You should now have a new executable ccx_preCICE in the bin/ folder of the adapter. You may move this file to a path known by your system, or add this to your PATH (careful when doing this!).
+
+
+
