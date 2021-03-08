@@ -1,10 +1,13 @@
-import os, importlib, subprocess, numpy as np
+import importlib
+import os
+import subprocess
 from pathlib import Path
-
-from models.solidModels.solidBase import *
-from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
-
+import numpy as np
 import precice as prc
+
+from pyFSI.models.solidModels.solidBase import *
+from pyFSI.vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
+
 
 class preciceSolid(object):
 

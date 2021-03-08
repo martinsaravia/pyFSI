@@ -16,11 +16,13 @@
 #   Only symmetric regions allowed (a single qx0)
 # --------------------------------------------------------------------------- #
 import sys
-import scipy.integrate as si, numpy as np
-from models.flowModels.flowBase import flowModel
-from models.properties.dimensionlessNumbers import dimensionlessNumber
-from models.properties.boundaryLayer import boundaryLayer
-from mesh.region.fsiRegion1D import fsiRegion1D
+import numpy as np
+import scipy.integrate as si
+from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
+from pyFSI.models.flowModels.flowBase import flowModel
+from pyFSI.models.properties.boundaryLayer import boundaryLayer
+from pyFSI.models.properties.dimensionlessNumbers import dimensionlessNumber
+
 
 class leakageFlow2D(flowModel):
     def __repr__(self):
@@ -42,8 +44,7 @@ class leakageFlow2D(flowModel):
         self._xix = None  # Nonlinear profile factor
         self._eta = None  # Derivative of f(Qx) at qx0
         self._bc = control['bc']
-        self._debug = {"smallDx": False,  # Dictionary of debug flags
-                       "equalIn": False}
+
 
 
         # ----- Procedures ----- #
@@ -82,10 +83,9 @@ class leakageFlow2D(flowModel):
 
         # Calculate the dimensionless numbers
         # Reference inlet size of one of the two regions (symmetry)
-        if self._debug["smallDx"]:
-            print("--> WARNING! The region inlet size is assumed "
+        if self._debug:
+            print("     WARNING: The region inlet size is assumed "
                   "to be the same for both regions. Check the flow model.")
-            self._debug["smallDx"] = False
 
         self.dRef = list(self.regions)[0].data['he0']
         self.lRef = self._mesh.L
@@ -196,7 +196,6 @@ class leakageFlow2D(flowModel):
             t0 = self._bc['inlet']['zeta'] / r['he2'][0]
             t1 = self._bc['outlet']['zeta'] / r['he2'][-1]
             tio = (t0 + t1) * r['hexL'] - t0
-
             # Output as dictionary, one vector per region
             Tf[region.name] = self._th * self._fluid['rho'] * self.qx0 * (tnl + tio + tvf)
 

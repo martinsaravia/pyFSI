@@ -11,9 +11,9 @@
 #
 # --------------------------------------------------------------------------- #
 from abc import ABCMeta, abstractmethod
-from models.properties.materialProperties import fluids as db
-from models.properties.dimensionlessNumbers import makeDimensionlessNumbers
-from mesh.region.fsiRegion1D import fsiRegion1D
+from pyFSI.models.properties.materialProperties import fluids as db
+from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
 # Base class for the fluid models
 
 class flowModel(metaclass=ABCMeta):
@@ -36,6 +36,10 @@ class flowModel(metaclass=ABCMeta):
         self._mesh = mesh
         self._boundary = boundary
         self._fluid = None
+        if execution['debug'] == 'yes':
+            self._debug = True
+        else:
+            self._debug = False
 
         # ----- Procedures ----- #
         # Get the fluid properties
@@ -69,7 +73,10 @@ class flowModel(metaclass=ABCMeta):
     def fluid(self):
         return self._fluid
 
-    def finish(self):
+    def closeOutput(self):
         for i in self.output:
             i.close()  # Close all files
+
+    def finish(self):
+        self.closeOutput()
 

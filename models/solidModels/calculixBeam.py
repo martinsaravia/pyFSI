@@ -1,8 +1,12 @@
-import os, importlib, subprocess, numpy as np
+import importlib
+import numpy as np
+import os
+import subprocess
 from pathlib import Path
 
-from models.solidModels.solidBase import *
-from vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
+from pyFSI.models.solidModels.solidBase import *
+from pyFSI.vectors.eigen import eigenValue as eval, eigenVector as evec, eigenSystemVector as esys
+
 
 # import pycalculix as pyc
 

@@ -1,4 +1,4 @@
-from mesh.region.boundary1D import *
+from pyFSI.mesh.region.boundary1D import *
 
 class boundary1DBeam(boundary1D):
     def __repr__(self):
@@ -9,11 +9,10 @@ class boundary1DBeam(boundary1D):
 
         # ----- Public attributes ----- #
         self.name = control['name']
-        self.y = None  # Position of the boundary
 
         # ----- Private attributes ----- #
         self._beam = beam
-        self._control = control
+        self._control = control  # Reference to the control dictionary
 
     # ----- Abstract methods ----- #
     def update(self):

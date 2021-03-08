@@ -10,10 +10,10 @@
 #
 #
 # --------------------------------------------------------------------------- #
-
 import numpy as np
 import scipy.integrate as si
-from vectors.field import field
+
+from pyFSI.vectors.field import field
 
 class eigenSystemVector(object):
 

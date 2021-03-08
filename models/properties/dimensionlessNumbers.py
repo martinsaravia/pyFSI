@@ -1,4 +1,4 @@
-from models.properties.materialProperties import constants
+from pyFSI.models.properties.materialProperties import constants
 
 
 def makeDimensionlessNumbers(solid=None, flow=None, fsi=None, numbers=None):

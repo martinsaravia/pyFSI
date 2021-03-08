@@ -8,13 +8,10 @@
 # Notes:
 #   This class generates a region from two 1D boundary objects
 #   Only one boundary can be flexible
-#
+# Modify: Add several mesh capability (add name variable and call it from solid or fluid). [xxx]
 # --------------------------------------------------------------------------- #
-
 import numpy as np
 import scipy.integrate as si
-
-
 
 class fsiRegion1D(object):
 
@@ -40,6 +37,7 @@ class fsiRegion1D(object):
         self._mesh = mesh   # Reference to the mesh
         self._bBot = boundary[control['botBoundary']]  # Top boundary
         self._bTop = boundary[control['topBoundary']]   # Bottom boundary
+        self._debug = mesh.debug()
 
         # ----- Procedures ----- #
         # Find the associated flexible boundary
@@ -49,11 +47,11 @@ class fsiRegion1D(object):
             flexBoundary = self._bTop
         else:
             flexBoundary = None
-            print("---> Warning: No flexible boundary found for region" + self.name)
+            print("     WARNING: No flexible boundary found for region" + self.name)
 
         self._eigen = flexBoundary.eigen()
-
-        self.check()
+        if self._debug:
+            self.check()
 
     # Update the geometric data
     def update(self):
@@ -67,12 +65,10 @@ class fsiRegion1D(object):
         self.data['dsi'] = self._bTop.dyi - self._bBot.dyi
         self.data['ddsi'] = self._bTop.ddyi - self._bBot.ddyi
 
-
-
     def check(self):
         # Check if the mesh density is ok
         if (self._mesh.x[1] - self._mesh.x[0]) > self.data['s'][0]:
-            print("--> WARNING: mesh dx is smaller the channel inlet "
+            print("     WARNING: mesh dx is smaller the channel inlet "
                   "for region " + self.name + ". Results may be wrong. ")
 
     # ----- Getters ----- #

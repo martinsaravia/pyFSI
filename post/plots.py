@@ -91,23 +91,34 @@ class plotFromFile(fsiPlot):
         except:
             xAxes = 1
 
+        # Solve the problem of different lengths for an incomplete run
+        # if xAxes != 1:
+        #     if xIndexes[0].stop == -1:
+        #         if xIndexes[0].stop > yIndexes[0].stop:
+        #             xIndexes[0].stop = yIndexes[0].stop
+        #         if xIndexes[0].stop < yIndexes[0].stop:
+        #             yIndexes[0].stop = xIndexes[0].stop
+        # else:
+        #     print(xIndexes)
+        #     if xIndexes.stop == -1:
+        #         if xIndexes.stop > yIndexes[0].stop:
+        #             xIndexes.stop = yIndexes[0].stop
+        #         if xIndexes.stop < yIndexes[0].stop:
+        #             yIndexes[0].stop = xIndexes.stop
 
         self.xData = np.array(data[0])[xIndexes]
         self.yData = np.array(data[1])[yIndexes]
 
         if xAxes == 1 and nPlots == 1:
-            print(self.yData)
             curve, = self.axe.plot(self.xData, self.yData)
             self.P.append(curve)
 
         else:
             if xAxes == 1:
-                print(1)
                 for i in range(nPlots):
                     curve, = self.axe.plot(self.xData, self.yData[:, i])
                     self.P.append(curve)
             else:
-                print(00)
                 for i in range(nPlots):
                     curve, = self.axe.plot(self.xData[:, i], self.yData[:, i])
                     self.P.append(curve)
@@ -176,7 +187,7 @@ class pScatter(fsiPlot):
 
 # Class for plotting magnetic flux function taken from FEMM with lua script
 class pFlux(fsiPlot):
-    def __init__(self, filePath, deriv=True):
+    def __init__(self, filePath, deriv=True, filter=True):
         super().__init__()
         self.data = np.genfromtxt(filePath, delimiter=",", skip_header=3)
 
@@ -186,20 +197,25 @@ class pFlux(fsiPlot):
         self.aflx[:, 1] = sps.savgol_filter(self.data[:, 1], 11, 2, deriv=0)
         self.aflx[:, 2] = self.data[:, 1]
         # Derivative of the flux
-        self.dflx = np.zeros(
-            (len(self.aflx[:, 0]), 2))  # Derivative of average flux
+        self.dflx = np.zeros((len(self.aflx[:, 0]), 2))  # Derivative of average flux
         self.dflx[:, 0] = self.aflx[:, 0]  # LENGTH COORDINATE
-        temp = sps.savgol_filter(self.data[:, 1], 21, 2, deriv=1)
-        # Necesito el dx para dividir la derivada porqeu sale calculada tomando dx=1 por defecto
-        dx = self.aflx[1, 0] - self.aflx[0, 0]
-        # Ojo que tira la derivada cambiada de signo
-        self.dflx[:, 1] = -sps.savgol_filter(temp, 11, 2, deriv=0) / dx
+
+        if filter:
+            temp = sps.savgol_filter(self.data[:, 1], 51, 2, deriv=1)
+            # Necesito el dx para dividir la derivada porqeu sale calculada tomando dx=1 por defecto
+            dx = self.aflx[1, 0] - self.aflx[0, 0]
+            # Ojo que tira la derivada cambiada de signo
+            self.dflx[:, 1] = -sps.savgol_filter(temp, 51, 2, deriv=0) / dx
+        else:
+            self.dflx[:, 1] = np.gradient(self.aflx[:, 1], self.aflx[:, 0], edge_order=2)
 
         # Choose the flux function or the derivative
         if deriv:
             curve, = self.axe.plot(self.dflx[:, 0], self.dflx[:, 1])
         else:
-            curve, = self.axe.plot(self.aflx[:, 0], self.aflx[:, 1])
+            curve, = self.axe.plot(self.aflx[:, 0], self.aflx[:, 2])
+
+        self.P = []
 
         self.P.append(curve)
 
@@ -263,41 +279,4 @@ class bifurcationPoint():
         self.yParameter = yPar
         self.modeNumber = neval
 
-#
 
-#     if not update:
-#         fig = plt.figure()
-#         ax = plt.axes()
-#         colors = cm.rainbow(np.linspace(0, 1, esize))
-#         plt.xlim(-100,100)
-#         plt.ylim(-750,750)
-
-#     # Gather the eigensystems
-#     for key, val in solution.items():
-#         esystems = [s.ES for s in solution[key]]
-
-
-#     for es in esystems:
-#         plt.scatter(np.real(es.evalues()), np.imag(es.evalues()), color=colors)
-#         print(np.real(es.evalues()[0:esize]))
-#     print("---------------------------------")
-#     # plt.xlim(-100,100)
-#     # plt.ylim(0,600)
-#     plt.show()
-
-
-#     modes = 2
-# esize = modes*2+2
-# colors = cm.rainbow(np.linspace(0, 1, esize))
-
-
-# for key, val in solution.items():
-#     esystems = [s.ES for s in solution[key]]
-
-#     for es in esystems:
-#         plt.scatter(np.real(es.evalues()), np.imag(es.evalues()), color=colors)
-#         print(np.real(es.evalues()[0:esize]))
-#     print("---------------------------------")
-#     # plt.xlim(-100,100)
-#     # plt.ylim(0,600)
-#     plt.show()

@@ -13,6 +13,8 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import scipy.integrate as si
+from scipy.interpolate import interp1d
+
 
 class boundary1D(metaclass=ABCMeta):
 
@@ -34,6 +36,7 @@ class boundary1D(metaclass=ABCMeta):
         self._mesh = mesh
 
     def calculate(self):
+        # Ver que en viga estan recalculadas, eliminar? [xxx]
         self.d1 = np.gradient(self.y, self._mesh.x, edge_order=2)
         self.ix = si.cumtrapz(self.y, self._mesh.x, initial=0.0)
         self.iL = si.simps(self.y, self._mesh.x)
@@ -45,6 +48,7 @@ class boundary1D(metaclass=ABCMeta):
 
     @abstractmethod
     def isFlexible(self):
+        # Es necesaria? Esta agregada como atributo tambien [xxx]
         pass
 
     @classmethod
@@ -58,6 +62,18 @@ class boundary1D(metaclass=ABCMeta):
             yvalues[i] = slope * x + hi
         return cls(mesh, name, yvalues)
 
+    @classmethod
+    def fromPoints(cls, mesh, dict, name=None):
+        points = np.array(dict['points'])
+        if 'interpolation' in dict:
+            interpKind = dict['interpolation']
+        else:
+            interKind = 'linear'
+        interpolator = interp1d(points[:, 0], points[:, 1], kind=interpKind)
+
+        return cls(mesh, name, interpolator(mesh.x))
+
+
     # ----- Getters ----- #
     def __call__(self):
         return self.y
@@ -70,4 +86,3 @@ class boundary1D(metaclass=ABCMeta):
 
     def write(self):
         pass
-

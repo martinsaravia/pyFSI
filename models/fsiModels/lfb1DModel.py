@@ -1,10 +1,11 @@
 # Change the system matrix.
 # Corrected the position of G, Small acceleration and changed the sign of Tb
-import numpy as np, scipy.integrate as si
-from vectors.eigen import eigenSystem as es
 import copy
-from models.fsiModels.fsiBase import fsiBase
-from models.properties.dimensionlessNumbers import dimensionlessNumber
+import numpy as np, scipy.integrate as si
+
+from pyFSI.vectors.eigen import eigenSystem as es
+from pyFSI.models.fsiModels.fsiBase import fsiBase
+from pyFSI.models.properties.dimensionlessNumbers import dimensionlessNumber
 
 class lfb1D(fsiBase):
     def __repr__(self):
@@ -12,6 +13,8 @@ class lfb1D(fsiBase):
 
     def __init__(self, execution, control, beam, flow):
         super().__init__(execution, control, beam, flow)
+        if self._debug:
+            print("     WARNING: Region names are hardcoded.")
 
         # Time and parametric info
         # self.ti = execution['time']['ti']
@@ -67,6 +70,8 @@ class lfb1D(fsiBase):
             ki = beam.k()[i] + flow.K()[i]
             ci = beam.c()[i] + flow.C()[i]
             mi = beam.m()[i] + flow.M()[i]
+
+            # Galerkin discretization
             for j in range(0, esize):
                 gj = beam.eigen.vectors[j]
                 self.K[i, j] = -si.simps(ki * gj, beam.mesh().x)
@@ -78,6 +83,7 @@ class lfb1D(fsiBase):
         Gq = flow.Gq()
         self.Gt = Gq['channelTop']
         self.Gb = Gq['channelBot']
+        # Galerkin discretization
         for i in range(0, esize):
             gi = beam.eigen.vectors[i]
             self.Tt[i] = si.simps(flow.Tf()['channelTop'] * gi, beam.mesh().x)

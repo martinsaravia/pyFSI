@@ -9,9 +9,9 @@
 #   The class inherits from fields, I think it could be a better idea to inherit
 #   from float.
 #---------------------------------------------------------------------------#
-
-from vectors.field import field
 import numpy as np
+
+from pyFSI.vectors.field import field
 
 class eigenValue(field):
     def __new__(cls, nparray, info=None):

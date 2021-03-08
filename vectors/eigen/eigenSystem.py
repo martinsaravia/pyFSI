@@ -11,7 +11,7 @@
 #---------------------------------------------------------------------------#
 
 import numpy as np
-from vectors.eigen import eigenValue, eigenVector
+from pyFSI.vectors.eigen import eigenValue, eigenVector
 
 class eigenSystem(object):
 

@@ -1,11 +1,11 @@
 {
-  "Finalized": "2021-02-07T14:30:43.493",
-  "Initialized": "2021-02-07T14:30:43.423",
+  "Finalized": "2021-03-08T17:53:35.660",
+  "Initialized": "2021-03-08T17:53:35.572",
   "Name": "",
   "Ranks": [
     {
-      "Finalized": "2021-02-07T14:30:43.493",
-      "Initialized": "2021-02-07T14:30:43.423",
+      "Finalized": "2021-03-08T17:53:35.660",
+      "Initialized": "2021-03-08T17:53:35.572",
       "StateChanges": [
         {
           "Name": "_GLOBAL",
@@ -15,7 +15,7 @@
         {
           "Name": "_GLOBAL",
           "State": 0,
-          "Timestamp": 69
+          "Timestamp": 88
         },
         {
           "Name": "configure",
@@ -30,12 +30,12 @@
         {
           "Name": "finalize",
           "State": 1,
-          "Timestamp": 69
+          "Timestamp": 87
         },
         {
           "Name": "finalize",
           "State": 0,
-          "Timestamp": 69
+          "Timestamp": 87
         },
         {
           "Name": "solver.initialize",
@@ -45,17 +45,17 @@
         {
           "Name": "solver.initialize",
           "State": 0,
-          "Timestamp": 69
+          "Timestamp": 88
         }
       ],
       "Timings": {
         "_GLOBAL": {
           "Count": 1,
           "Data": {},
-          "Max": 69,
-          "Min": 69,
+          "Max": 88,
+          "Min": 88,
           "TimeRatio": 1.0,
-          "Total": 69
+          "Total": 88
         },
         "configure": {
           "Count": 1,
@@ -76,10 +76,10 @@
         "solver.initialize": {
           "Count": 1,
           "Data": {},
-          "Max": 69,
-          "Min": 69,
+          "Max": 88,
+          "Min": 88,
           "TimeRatio": 1.0,
-          "Total": 69
+          "Total": 88
         }
       }
     }

@@ -1,17 +1,23 @@
-import importlib, json, pathlib, sys, shutil
-from functools import partial
-import time as tt
-from mesh.fsiMesh1D import fsiMesh1D
+import importlib
+import json
 import numpy as np
+import pathlib
+import shutil
+import sys
+import time as tt
 from copy import deepcopy
+from functools import partial
+from pyFSI.mesh.fsiMesh1D import fsiMesh1D
+
 
 # Create a list of case dictionaries
 def createFSIObjects(caseDict):
+    print("Preprocessing...")
     time = caseDict["execution"]["time"]
     caseDictList = []  # List of dictionaries, one for each parameter configuration
     # Process parametric options
     if time["stepping"] == "parametric":
-        print("This is a parametric analysis...")
+        print("Assembling the parameters vector...")
         parValues = np.linspace(time["startParameter"],
                                 time["endParameter"],
                                 time["steps"])
@@ -38,9 +44,9 @@ def createFSIObjects(caseDict):
 
         # Create the solids
         if "solid" in caseDict:
-            print("Creating the solid...")
+            print("---> Creating the solid...")
             # Create the solid model
-            solidModule = importlib.import_module('models.solidModels.' +
+            solidModule = importlib.import_module('pyFSI.models.solidModels.' +
                                                   caseDict['solid']['formulation'] +
                                                   'Model')
             solid = getattr(solidModule,
@@ -50,11 +56,11 @@ def createFSIObjects(caseDict):
         # Create the boundaries
         if "boundary" in caseDict:
             boundary = {}
-            print("Creating the boundaries...")
+            print("---> Creating the boundaries...")
             # Create the dict of boundary objects
             for b in caseDict["boundary"]:
                 # Import the module (file .py)
-                module = importlib.import_module('mesh.region.' + b['type'])
+                module = importlib.import_module('pyFSI.mesh.region.' + b['type'])
                 if "method" in b:
                     # get the class name inside the module
                     obj = getattr(getattr(module, b['type']), b['method'])(mesh, b)
@@ -67,9 +73,9 @@ def createFSIObjects(caseDict):
 
         # Create the flows
         if "flow" in caseDict:
-            print("Creating the flow...")
+            print("---> Creating the flow...")
             # Create the flow object
-            flowModule = importlib.import_module('models.flowModels.' +
+            flowModule = importlib.import_module('pyFSI.models.flowModels.' +
                                                  caseDict['flow']['formulation'] +
                                                  'Model')
             flow = getattr(flowModule,
@@ -80,15 +86,18 @@ def createFSIObjects(caseDict):
 
         # Create a list of fsi objects
         if "fsi" in caseDict:
-            print("Building the FSI object...")
-            fsiModule = importlib.import_module('models.fsiModels.' +
+            print("---> Building the FSI object...")
+            fsiModule = importlib.import_module('pyFSI.models.fsiModels.' +
                                                 caseDict['fsi']['formulation'] +
                                                 'Model')
-            fsi.append(getattr(fsiModule,
+            fsiObject = getattr(fsiModule,
                                 caseDict['fsi']['formulation'])(caseDict['execution'],
                                                                 caseDict['fsi'],
                                                                 solid,
-                                                                flow))
+                                                                flow)
 
-    print("All objects were created succesfully...", "\n")
+            fsi.append(fsiObject)
+            #fsiObject.finish() # Close the files to avoid maximum file error (not good since finish may have other code)
+
+    print("Preprocessing finished successfully...", "\n")
     return fsi
