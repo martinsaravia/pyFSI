@@ -27,7 +27,6 @@ class transient(solverBase):
         for n in range(1, self.control['subcycles'] + 1):
             pass
 
-
     def explicit(self, tspan):
         fsi = self.fsi
 
@@ -58,7 +57,6 @@ class transient(solverBase):
         # 4) Update the region geometry
         # print("---> Updating the region position, velocities and accelerations")
         fsi.update('regions', None, None)
-
 
     def write(self, t):
         # print("---> Writing results")

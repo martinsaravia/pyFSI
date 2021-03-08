@@ -234,11 +234,10 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.output[3].write(str(self._pIn) + '\n')
         self.output[4].write(" ".join(map(str, self.v0)) + '\n')
         self.output[5].write(str(self._ti) + '\n')
-        force0 = si.simps(-self.px[0] , self._mesh.x)
-        force1 = si.simps(self.px[1], self._mesh.x)
-        force = si.simps(-self.px[0] + self.px[1], self._mesh.x)
-        print(force, force0, force1)
-        self.output[6].write(str(force) + '\n')
+        # force0 = si.simps(-self.px[0] , self._mesh.x)
+        # force1 = si.simps(self.px[1], self._mesh.x)
+        # force = si.simps(-self.px[0] + self.px[1], self._mesh.x)
+        # self.output[6].write(str(force) + '\n')
 
     # Calculate some constants
     def constants(self):
