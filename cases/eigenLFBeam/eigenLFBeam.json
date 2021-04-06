@@ -17,7 +17,8 @@
             "startParameter":    1.0E-4,
             "endParameter":      5.2E-2,
             "steps":             100
-        }
+        },
+        "debug": "yes"
     },
 
     "mesh":

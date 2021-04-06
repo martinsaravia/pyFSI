@@ -13,6 +13,8 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import scipy.integrate as si
+from scipy.interpolate import interp1d
+
 
 class boundary1D(metaclass=ABCMeta):
 
@@ -59,6 +61,18 @@ class boundary1D(metaclass=ABCMeta):
         for i, x in enumerate(xvalues):
             yvalues[i] = slope * x + hi
         return cls(mesh, name, yvalues)
+
+    @classmethod
+    def fromPoints(cls, mesh, dict, name=None):
+        points = np.array(dict['points'])
+        if 'interpolation' in dict:
+            interpKind = dict['interpolation']
+        else:
+            interKind = 'linear'
+        interpolator = interp1d(points[:, 0], points[:, 1], kind=interpKind)
+
+        return cls(mesh, name, interpolator(mesh.x))
+
 
     # ----- Getters ----- #
     def __call__(self):

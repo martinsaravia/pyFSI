@@ -8,8 +8,9 @@
         "solver":
         {
             "type":         "transient",
-            "integrator":   "RK45-RK45",
+            "integrator":   ["Radau","Radau"],
             "coupling":     "explicit",
+            "subcycles":	40,
             "processes":     1,
             "rtol":         1E-6,
             "atol":         1E-6,
@@ -19,10 +20,10 @@
         {
             "stepping":     "automatic",
             "startTime":    0,
-            "endTime":      5,
+            "endTime":      1,
             "deltaT":       1E-4
         },
-        "debug":"n",
+        "debug":"yes",
         "output":
         {
             "variables": ["Q0", "U", "V", "A"]

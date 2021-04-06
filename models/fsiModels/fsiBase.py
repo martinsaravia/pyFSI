@@ -15,17 +15,24 @@ class fsiBase(ABC):
         self._flow = flow
         self._execution = execution
         self._control = control
+        if execution['debug'] == 'yes':
+            self._debug = True
+        else:
+            self._debug = False
 
     @abstractmethod
     def finish(self):
         self._solid.finish()
         self._flow.finish()
-        for i in self.output:
-            i.close()  # Close all files
+        self.closeOutput()
 
     @abstractmethod
     def write(self):
         pass
+
+    def closeOutput(self):
+        for i in self.output:
+            i.close()  # Close all files
 
     def calcNumbers(self):
         self.dimNumbers = makeDimensionlessNumbers(fsi=self)

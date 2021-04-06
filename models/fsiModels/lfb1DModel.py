@@ -13,7 +13,8 @@ class lfb1D(fsiBase):
 
     def __init__(self, execution, control, beam, flow):
         super().__init__(execution, control, beam, flow)
-        print("     WARNING: Region names are hardcoded.")
+        if self._debug:
+            print("     WARNING: Region names are hardcoded.")
 
         # Time and parametric info
         # self.ti = execution['time']['ti']
@@ -97,19 +98,19 @@ class lfb1D(fsiBase):
         # System  Matrix
         Mi = np.linalg.inv(self.M)
 
+        MiDotC = np.dot(Mi, self.C)
+        MiDotK = np.dot(Mi, self.K)
+        MiDotTb = np.dot(Mi, self.Tb)
+        MiDotTt = np.dot(Mi, self.Tt)
+
         self.S[0:esize, esize:2*esize] = np.identity(esize)
-        self.S[esize:2*esize, 0:esize] = np.dot(Mi, self.K)
-        self.S[esize:2*esize, esize:2*esize] = np.dot(Mi, self.C)
-        self.S[esize:2*esize, 2*esize] = np.dot(Mi, self.Tb)
-        self.S[esize:2*esize, 2*esize+1] = -np.dot(Mi, self.Tt)
+        self.S[esize:2*esize, 0:esize] = MiDotK
+        self.S[esize:2*esize, esize:2*esize] = MiDotC
+        self.S[esize:2*esize, 2*esize] = MiDotTb
+        self.S[esize:2*esize, 2*esize+1] = -MiDotTt
 
         # Formulation considering acceleration terms
         if self._control['type'] == "Saravia":
-            MiDotC = np.dot(Mi, self.C)
-            MiDotK = np.dot(Mi, self.K)
-            MiDotTb = np.dot(Mi, self.Tb)
-            MiDotTt = np.dot(Mi, self.Tt)
-
             self.S[2 * esize, 0:esize] = -self.Eb - np.dot(self.Bb, MiDotK)
             self.S[2 * esize, esize:2 * esize] = -self.Db - np.dot(self.Bb, MiDotC)
             self.S[2 * esize, 2 * esize] = self.Gb - np.dot(self.Bb, MiDotTb)

@@ -6,7 +6,7 @@ class solidModel(metaclass=ABCMeta):
     def __repr__(self):
         return 'solidModel Abstract Class'
 
-    def __init__(self, execution, control, mesh, name=None):
+    def __init__(self, execution, control, mesh, name=None, debug=False):
 
         # ----- Public attribues ----- #
         self.name = name
@@ -16,11 +16,16 @@ class solidModel(metaclass=ABCMeta):
         self.uRef = None  # Reference displacement
         self.vRef = None  # Reference velocity
         self.dimNumbers = None  # Dimensionless numbers
+        self._debug = debug
 
         # ----- Private attributes ----- #
         self._execution = execution
         self._control = control
         self._mesh = mesh
+        if execution['debug'] == 'yes':
+            self._debug = True
+        else:
+            self._debug = False
 
         # ----- Procedures ----- #
         # Get the material properties
@@ -46,6 +51,9 @@ class solidModel(metaclass=ABCMeta):
     def material(self):
         return self._material
 
-    def finish(self):
+    def closeOutput(self):
         for i in self.output:
             i.close()  # Close all files
+
+    def finish(self):
+        self.closeOutput()

@@ -1,26 +1,23 @@
-# --------------------------------------------------------------------------- #
-#    p    #     version: 0.1
-#    y    #     date: 02/07/2020
-#    F    #     author: Martin Saravia
-#    S    #     description: Flow model interface
-#    I    #
-# --------------------------------------------------------------------------- #
-# Notes:
-#   This class generates a region from two 1D boundary objects
-#   Only one boundary can be flexible
-#
-# --------------------------------------------------------------------------- #
+"""@package docstring
+Base class for the fluid models
+
+Only one boundary can be flexible
+"""
+
 from abc import ABCMeta, abstractmethod
 from pyFSI.models.properties.materialProperties import fluids as db
 from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
 from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
-# Base class for the fluid models
+
 
 class flowModel(metaclass=ABCMeta):
+    """ Base class for the flow models"""
     def __repr__(self):
         return 'fluidModel Abstract Class'
 
     def __init__(self, execution, control, mesh, boundary):
+        """Constructor"""
+
         # ----- Public attribues ----- #
         self.dof = None  # Number of DOF of the model
         self.regions = []  # Regions comprising the domain
@@ -36,6 +33,10 @@ class flowModel(metaclass=ABCMeta):
         self._mesh = mesh
         self._boundary = boundary
         self._fluid = None
+        if execution['debug'] == 'yes':
+            self._debug = True
+        else:
+            self._debug = False
 
         # ----- Procedures ----- #
         # Get the fluid properties
@@ -49,6 +50,7 @@ class flowModel(metaclass=ABCMeta):
 
     # Calculate the dimensionless numbers
     def calcNumbers(self):
+        """ Calculates dimensionless numbers"""
         self.dimNumbers = makeDimensionlessNumbers(flow=self)
 
     # Pure virtual methods
@@ -69,7 +71,10 @@ class flowModel(metaclass=ABCMeta):
     def fluid(self):
         return self._fluid
 
-    def finish(self):
+    def closeOutput(self):
         for i in self.output:
             i.close()  # Close all files
+
+    def finish(self):
+        self.closeOutput()
 

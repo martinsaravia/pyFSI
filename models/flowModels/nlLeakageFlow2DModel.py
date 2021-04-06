@@ -73,7 +73,7 @@ class nlLeakageFlow2D(flowModel, ABC):
         # self._gDof = self.regions[0].eigen().size
 
         # Output
-        bufferSize =  1
+        bufferSize = 1
         self.output = []
         self.output.append(open(self._execution['paths']['fluidPath'] / 'Q0.out',  'a+', buffering=bufferSize))
         self.output.append(open(self._execution['paths']['fluidPath'] / 'dQ0.out', 'a+', buffering=bufferSize))
@@ -81,6 +81,7 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.output.append(open(self._execution['paths']['fluidPath'] / 'pIn.out', 'a+', buffering=bufferSize))
         self.output.append(open(self._execution['paths']['fluidPath'] / 'v0.out',  'a+', buffering=bufferSize))
         self.output.append(open(self._execution['paths']['fluidPath'] / 'time.out', 'a+',buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['fluidPath'] / 'force.out', 'a+', buffering=bufferSize))
 
 
     # Flow rate equation initial condition
@@ -110,7 +111,9 @@ class nlLeakageFlow2D(flowModel, ABC):
 
                 if (np.abs(self.Q0[r] - Q0old[r])) / np.abs(self.Q0[r]) < Qtol:
                     convergence[r] = True
+
             Q0old = self.Q0.copy()
+
             # print('Current Q0 is: ', self.Q0)
             # Check convergence of both regions
             if convergence[0] and convergence[1]:
@@ -231,6 +234,10 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.output[3].write(str(self._pIn) + '\n')
         self.output[4].write(" ".join(map(str, self.v0)) + '\n')
         self.output[5].write(str(self._ti) + '\n')
+        # force0 = si.simps(-self.px[0] , self._mesh.x)
+        # force1 = si.simps(self.px[1], self._mesh.x)
+        # force = si.simps(-self.px[0] + self.px[1], self._mesh.x)
+        # self.output[6].write(str(force) + '\n')
 
     # Calculate some constants
     def constants(self):

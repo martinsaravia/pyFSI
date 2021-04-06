@@ -12,6 +12,7 @@ p = plotFromFile(xfilePath,
                  xIndexes=np.s_[:],
                  yIndexes=np.s_[:, 0:2])
 p.axe.set_xlim([0, 6000])
+
 p.axe.set_ylim([0, 150])
 p.axe.set_title("Vaughan SN 01")
 p.axe.set_xlabel("Pressure difference (Pa)")

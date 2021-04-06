@@ -73,7 +73,7 @@ class fsiPlot():
 
 
 class plotFromFile(fsiPlot):
-    def __init__(self, xFile, yFile, xIndexes=None, yIndexes=None):
+    def __init__(self, xFile, yFile, xIndexes=None, yIndexes=None, scatter=False):
         super().__init__()
         data = loadFiles([xFile, yFile])
 
@@ -120,7 +120,10 @@ class plotFromFile(fsiPlot):
                     self.P.append(curve)
             else:
                 for i in range(nPlots):
-                    curve, = self.axe.plot(self.xData[:, i], self.yData[:, i])
+                    if scatter:
+                        curve = self.axe.scatter(self.xData[:, i], self.yData[:, i])
+                    else:
+                        curve, = self.axe.plot(self.xData[:, i], self.yData[:, i])
                     self.P.append(curve)
 
     def update(self, i):
@@ -187,7 +190,7 @@ class pScatter(fsiPlot):
 
 # Class for plotting magnetic flux function taken from FEMM with lua script
 class pFlux(fsiPlot):
-    def __init__(self, filePath, deriv=True):
+    def __init__(self, filePath, deriv=True, filter=True):
         super().__init__()
         self.data = np.genfromtxt(filePath, delimiter=",", skip_header=3)
 
@@ -199,17 +202,21 @@ class pFlux(fsiPlot):
         # Derivative of the flux
         self.dflx = np.zeros((len(self.aflx[:, 0]), 2))  # Derivative of average flux
         self.dflx[:, 0] = self.aflx[:, 0]  # LENGTH COORDINATE
-        temp = sps.savgol_filter(self.data[:, 1], 101, 2, deriv=1)
-        # Necesito el dx para dividir la derivada porqeu sale calculada tomando dx=1 por defecto
-        dx = self.aflx[1, 0] - self.aflx[0, 0]
-        # Ojo que tira la derivada cambiada de signo
-        self.dflx[:, 1] = -sps.savgol_filter(temp, 51, 2, deriv=0) / dx
+
+        if filter:
+            temp = sps.savgol_filter(self.data[:, 1], 51, 2, deriv=1)
+            # Necesito el dx para dividir la derivada porqeu sale calculada tomando dx=1 por defecto
+            dx = self.aflx[1, 0] - self.aflx[0, 0]
+            # Ojo que tira la derivada cambiada de signo
+            self.dflx[:, 1] = -sps.savgol_filter(temp, 51, 2, deriv=0) / dx
+        else:
+            self.dflx[:, 1] = np.gradient(self.aflx[:, 1], self.aflx[:, 0], edge_order=2)
 
         # Choose the flux function or the derivative
         if deriv:
             curve, = self.axe.plot(self.dflx[:, 0], self.dflx[:, 1])
         else:
-            curve, = self.axe.plot(self.aflx[:, 0], self.aflx[:, 1])
+            curve, = self.axe.plot(self.aflx[:, 0], self.aflx[:, 2])
 
         self.P = []
 

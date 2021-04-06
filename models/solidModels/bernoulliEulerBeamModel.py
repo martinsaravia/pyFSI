@@ -254,6 +254,16 @@ class bernoulliEulerBeam(solidModel):
                         (np.sinh(b * L) - np.sin(b * L)) / (np.cosh(b * L) + np.cos(b * L))) * (
                          np.sinh(b * x) - np.sin(b * x))
 
+        elif pars['bc']['type'] == "simpleSupport":
+            betaL = np.array([3.141592653589793, 6.283185307179586, 9.42477796076938, 12.566370614359172, 15.707963267948966, 18.84955592153876])
+            beta = betaL / L
+            vector = lambda x, b: np.sin(b * x)
+
+        elif pars['bc']['type'] == "clampedSimple":
+            betaL = np.array([3.9265975952148438, 7.068580627441406, 10.210182189941406, 13.351768493652344, 14.137166976928711, 16.49335479736328])
+            beta = betaL / L
+            vector = lambda x, b: (np.cos(b * x) - np.cosh(b * x))-((np.cos(b * L)-np.cosh(b * L))/(np.sin(b * L)-np.sinh(b * L))) * (np.sin(b * L)-np.sinh(b * L))
+
         # Fill the eigensystem
         values = []
         vectors = []
@@ -271,7 +281,8 @@ class bernoulliEulerBeam(solidModel):
                     print("--> Choosing mass normalization for the beam...")
                     normMethod = "mass"
                 else:
-                    print("--> Beam normalization method unknown. Choosing False...")
+                    if self._debug:
+                        print("----> Beam normalization method unknown. Choosing False...")
                     normMethod = False
             else:
                 normMethod = False
@@ -295,6 +306,7 @@ class bernoulliEulerBeam(solidModel):
     def _setBC(self, type, eigenSystem):
         mesh = self._mesh
         es = self.eigen
+        # Choose the boundary condition
         if type == "clampedFree":
             # Create the interpolate object
             for i in range(es.size):
@@ -302,6 +314,42 @@ class bernoulliEulerBeam(solidModel):
                 es.setD1(0, i, 0.0)
                 es.setD2(-1, i, 0.0)
                 es.setD3(-1, i, 0.0)
+                # Correct the third derivative
+                itpobj = interpolate.interp1d(mesh.x[3:],
+                                              es.d3[i][3:],
+                                              fill_value='extrapolate')
+                es.setD3(range(0, 3), i, itpobj(mesh.x[0:3]))
+                # Correct the fourth derivative
+                itpobj = interpolate.interp1d(mesh.x[4:-4],
+                                              es.d4[i][4:-4],
+                                              fill_value='extrapolate')
+                es.setD4(range(0, 4), i, itpobj(mesh.x[0:4]))
+                es.setD4(range(-4, 0), i, itpobj(mesh.x[-4:]))
+
+        elif type == "simpleSupport":
+            for i in range(es.size):
+                es.setV(0, i, 0.0)
+                es.setD2(0, i, 0.0)
+                es.setV(-1, i, 0.0)
+                es.setD2(-1, i, 0.0)
+                # Correct the third derivative
+                itpobj = interpolate.interp1d(mesh.x[3:],
+                                              es.d3[i][3:],
+                                              fill_value='extrapolate')
+                es.setD3(range(0, 3), i, itpobj(mesh.x[0:3]))
+                # Correct the fourth derivative
+                itpobj = interpolate.interp1d(mesh.x[4:-4],
+                                              es.d4[i][4:-4],
+                                              fill_value='extrapolate')
+                es.setD4(range(0, 4), i, itpobj(mesh.x[0:4]))
+                es.setD4(range(-4, 0), i, itpobj(mesh.x[-4:]))
+
+        elif type == "clampedSimple":
+            for i in range(es.size):
+                es.setV(0, i, 0.0)
+                es.setD1(0, i, 0.0)
+                es.setV(-1, i, 0.0)
+                es.setD2(-1, i, 0.0)
                 # Correct the third derivative
                 itpobj = interpolate.interp1d(mesh.x[3:],
                                               es.d3[i][3:],

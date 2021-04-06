@@ -44,8 +44,7 @@ class leakageFlow2D(flowModel):
         self._xix = None  # Nonlinear profile factor
         self._eta = None  # Derivative of f(Qx) at qx0
         self._bc = control['bc']
-        self._debug = {"smallDx": True,  # Dictionary of debug flags
-                       "equalIn": True}
+
 
 
         # ----- Procedures ----- #
@@ -84,10 +83,9 @@ class leakageFlow2D(flowModel):
 
         # Calculate the dimensionless numbers
         # Reference inlet size of one of the two regions (symmetry)
-        if self._debug["smallDx"]:
+        if self._debug:
             print("     WARNING: The region inlet size is assumed "
                   "to be the same for both regions. Check the flow model.")
-            self._debug["smallDx"] = False
 
         self.dRef = list(self.regions)[0].data['he0']
         self.lRef = self._mesh.L

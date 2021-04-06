@@ -1,4 +1,4 @@
-# pyFSI v0.2.2
+# pyFSI v0.2.3
 
 This is the second version of pyFSI, a code for solving fluid-structure interaction problems.
 

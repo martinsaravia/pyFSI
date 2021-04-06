@@ -37,6 +37,7 @@ class fsiRegion1D(object):
         self._mesh = mesh   # Reference to the mesh
         self._bBot = boundary[control['botBoundary']]  # Top boundary
         self._bTop = boundary[control['topBoundary']]   # Bottom boundary
+        self._debug = mesh.debug()
 
         # ----- Procedures ----- #
         # Find the associated flexible boundary
@@ -49,8 +50,8 @@ class fsiRegion1D(object):
             print("     WARNING: No flexible boundary found for region" + self.name)
 
         self._eigen = flexBoundary.eigen()
-
-        self.check()
+        if self._debug:
+            self.check()
 
     # Update the geometric data
     def update(self):
@@ -63,8 +64,6 @@ class fsiRegion1D(object):
         self.data['dds'] = self._bTop.ddy - self._bBot.ddy
         self.data['dsi'] = self._bTop.dyi - self._bBot.dyi
         self.data['ddsi'] = self._bTop.ddyi - self._bBot.ddyi
-
-
 
     def check(self):
         # Check if the mesh density is ok

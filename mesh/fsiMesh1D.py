@@ -23,6 +23,9 @@ class fsiMesh1D(object):
         self.size = len(self.x)  # number of sampling points
         self.L = self.x[-1] - self.x[0]  # Length of the 1D domain
 
+        # ----- Private attributes ----- #
+        self._debug = False
+
     # Factory Methods:
     # Here the @classmethods act as different constructors, Note that we also
     # use default arguments in __init__ to flexibilize the constructors
@@ -48,5 +51,8 @@ class fsiMesh1D(object):
 
     def __repr__(self):
         return 'fsiMesh1D '
+
+    def debug(self):
+        return self._debug
 
 
