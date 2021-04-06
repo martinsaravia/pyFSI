@@ -175,7 +175,6 @@ class lfb1D(fsiBase):
         self.output[2].write(" ".join(map(str, solution.evectors())) + '\n')
 
 
-
 # Dimensional numbers of this model
 class massRatio(dimensionlessNumber):
     def __init__(self, fsi):
@@ -185,6 +184,7 @@ class massRatio(dimensionlessNumber):
         ms = fsi.solid().material()['rho'] * fsi.solid().tRef  # Solid mass
         self.value = ms / mf
 
+
 class stiffnessRatio(dimensionlessNumber):
     def __init__(self, fsi):
         super().__init__()
@@ -193,11 +193,13 @@ class stiffnessRatio(dimensionlessNumber):
         ks = fsi.solid().material()['E'] * fsi.solid().control()['I']   # Solid mass
         self.value = ks / kf
 
+
 class gapRatio(dimensionlessNumber):
     def __init__(self, fsi):
         super().__init__()
         self.type = "Gr"
         self.value = fsi.flow().eRef
+
 
 class viscousParameter(dimensionlessNumber):
     def __init__(self, fsi):
