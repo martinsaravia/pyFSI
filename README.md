@@ -30,7 +30,7 @@ Follow the examples in the case directory. Currently we support three type of an
 This is an error that is often generated during large parametric runs. Somehow even when pyFSI opens the files as a+, a new file is opened. 
 
 #### Solution
-Execute in a shell `ulimit -n 2048, or increase the limits until the errors dissapear. 
+Execute in a shell `ulimit -n 2048, or increase the limits until the errors disappear. 
 
 Note that closing the file after creation is expensive, so it is preferred to let it opened. 
 
