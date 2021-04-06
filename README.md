@@ -1,8 +1,12 @@
-# pyFSI v0.2.3
+# pyFSI v0.2.4
 
 This is the second version of pyFSI, a code for solving fluid-structure interaction problems.
 
 Currently we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlinear Leakege Flow and preciceCoupling.
+
+## Change List
+* New boundary conditions for simple supported beams. 
+
 
 ## Dependencies
 * Python 3
