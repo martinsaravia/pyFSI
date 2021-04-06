@@ -15,8 +15,7 @@ Currently we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlin
 
 ## Installation
 * Clone the repository to your computer.
-* Edit your .bashrc and change the file limit adding `ulimit -n 2048`
-
+* Edit your .bashrc and change the file limit adding `ulimit -n 2048`. For parametric analysis, you may need to set this value to an even larger number; for example, for 1000 parametric analysis `ulimit -n 102400` is required.
 ## Usage
 
 Create a folder in the cases directory containing the .json input file and an allrun.py which executes the solver. 
