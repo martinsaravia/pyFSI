@@ -33,7 +33,6 @@ def runCase(caseName):
    # Read the case file
 
     caseDict = readCase(casePath, caseName)
-
     # Create the fsi object list from the original dictionary (input file)
     fsiObjects = createFSIObjects(caseDict)
 

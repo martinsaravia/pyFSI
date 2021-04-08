@@ -12,7 +12,7 @@
             "coupling":     "explicit",
             "subcycles":	40,
             "processes":     1,
-            "rtol":         1E-6,
+            "rtol":         1E-4,
             "atol":         1E-6,
             "maxIter":      10
         },
@@ -20,14 +20,10 @@
         {
             "stepping":     "automatic",
             "startTime":    0,
-            "endTime":      1,
+            "endTime":      2.0,
             "deltaT":       1E-4
         },
-        "debug":"yes",
-        "output":
-        {
-            "variables": ["Q0", "U", "V", "A"]
-        }
+        "debug":"yes"
     },
 
 
@@ -72,7 +68,6 @@
     {
         "name":         "viga",
         "formulation":  "bernoulliEulerBeam",
-        "normalize":    "mass",
         "type":         "nnn",
         "section":
         {
@@ -95,13 +90,14 @@
             "type":     "modal",
             "method":   "analytic",
             "modes":    4,
+			"normalize": "no",
             "damping":  [0.05, 0.03]
         },
         "bc":
         {
             "type":     "clampedFree",
-            "y0":  0,
-            "dy0": 0
+            "y0":  0.0,
+            "dy0": 0.0
         }
     },
 
@@ -132,24 +128,41 @@
         }],
         "bc" :
         {
-            "type":     "variableInletPressure",
             "inlet":
-            {
-                "p":     [2,  1.0E4],
-                "zeta":  1.0
-            },
-            "outlet":
-            {
-                "p": 0,
-                "zeta": 0.0
-            }
-        }
-    },
+	        {
+	            "p":    
+				{
+					"type":   		   "tabulatedFixedValue",
+					"interpolation":   "linear",
+					"time":   			[0.0,  1.0,     2.0  ], 
+					"value":  			[10.0, 1.0E4,   1.0E4]
+				},
+			    "zeta":  
+				{
+					"type": 			"fixedValue",
+					"value":       		1.0
+				}
+			},
 
-    "fsi":
-    {
-        "name":         "nlTest",
-        "formulation":  "nlLFB1D",
-        "type":         "None"
-    }
+            "outlet":
+	        {
+	            "p":    
+				{
+					"type":   		   "fixedValue",
+					"value":   			0.0
+				},
+			    "zeta":  
+				{
+					"type":   		   "fixedValue",
+					"value":   			0.0
+				}
+        	}
+		}
+	},
+
+	"fsi":
+	{
+	    "name":         "nlTest",
+	    "formulation":  "nlLFB1D"
+	}
 }

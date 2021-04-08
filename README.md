@@ -97,4 +97,7 @@ and also rename it to calculix-adapter.
 `sudo mv opt/calculix-adapter-master opt/calculix-adapter
 sudo mv opt/calculix-adapter /opt/CalculiX/.`
 
+### Run precice case
+It is often necessary to run the case twice from the same terminal without closing the additional terminal opened by pyFSI. We are now sure which is the problem.
+
 
