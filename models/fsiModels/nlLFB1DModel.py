@@ -91,8 +91,6 @@ class nlLFB1D(fsiBase):
                                        solid.addedStateModalForce(flow.deltaPx[0]))
         return self.rhs[self._i0:self._i2]
 
-    # def residual(self):
-    #     res = self._solid.F() + self._flow.F() - self.solid.
 
     def calcNumbers(self):
         super().calcNumbers()

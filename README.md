@@ -6,6 +6,7 @@ Currently we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlin
 
 ## Change List
 * New boundary conditions for simple supported beams. 
+* Boundary conditions are now specified through tables.
 
 
 ## Dependencies
