@@ -124,9 +124,9 @@ def makeCase(caseName):
     paths['caseName'] = caseName
     paths['casePath'] = casePath
     paths['solidPath'] = casePath/"solid/"
-    paths['fluidPath'] = casePath/"fluid/"
+    paths['flowPath'] = casePath/"fluid/"
     paths['solidPath'].mkdir(parents=True, exist_ok=True)
-    paths['fluidPath'].mkdir(parents=True, exist_ok=True)
+    paths['flowPath'].mkdir(parents=True, exist_ok=True)
     caseDict['execution']['paths'] = paths
 
     return caseDict

@@ -41,5 +41,14 @@ class tabulatedFixedValue(fixedValueBase):
         self._interpolator = interpolate.interp1d(xAxis, yAxis, fill_value='extrapolate', kind=kind)
 
     def getValue(self, x=None):
-        return self._interpolator(x)
+        # Note we use [()] to obtain a numpy float and not an array of 0D (problems while saving files)
+        return self._interpolator(x)[()]
 
+
+# Outflow boundary conditions (still not implemented)
+class outFlow(fixedValue):
+    def __init__(self, dictionary):
+        super().__init__(dictionary)
+
+    def getValue(self, x=None):
+        return 0

@@ -21,7 +21,7 @@ class transient(solverBase):
             getattr(self, self.control['coupling'])(tspan)  # Call the implicit or the explicit step
             self.write(tspan[1])
             tspan += dt
-        self.finish()
+        self.fsi.finish()
 
     def implicit(self, tspan):
         for n in range(1, self.control['subcycles'] + 1):

@@ -23,6 +23,12 @@
             "endTime":      2.0,
             "deltaT":       1E-4
         },
+		"output": 
+		{
+			"flow":  ["flowRate", "flowSpeed"],
+			"solid": ["wn"],
+			"fsi":   ["iEigenValues", "rEigenValues", "eigenVectors"]
+		},
         "debug":"yes"
     },
 

@@ -14,7 +14,7 @@ class preciceSolid(object):
     def __repr__(self):
         return 'preciceSolid'
 
-    def __init__(self, execution, control, mesh,  name='NN'):
+    def __init__(self, execution, control, mesh,  time, name='NN'):
         self._name = name
         self._fileName = control['filename']
         self.run()

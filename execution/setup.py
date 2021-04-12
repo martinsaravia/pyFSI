@@ -1,10 +1,10 @@
 import pathlib, sys
 
 
-def setDirectoryTree()
+def setDirectoryTree():
     # List of directories to add to the system path
     mainPath = pathlib.Path(__file__).parent.absolute() / ".."
-    dirList = ['', 'cases', 'execution', 'mesh', 'models', 'post', 'solvers', 'util', 'vectors']
+    dirList = ['', 'cases', 'execution', 'mesh', 'models', 'post', 'solvers', 'util', 'vectors', "fields"]
 
     # Add the directories
     for d in dirList:

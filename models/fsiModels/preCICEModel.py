@@ -6,8 +6,8 @@ class preCICE(fsiBase):
     def __repr__(self):
         return 'precice_FSI'
 
-    def __init__(self, execution, control, solid, flow):
-        super().__init__(execution, control, solid, flow)
+    def __init__(self, execution, control, solid, flow, time):
+        super().__init__(execution, control, solid, flow, time)
 
         # Precice initialization
         print("Initializing the precice interface...")

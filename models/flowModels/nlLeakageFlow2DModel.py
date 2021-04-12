@@ -48,8 +48,13 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.Forces = np.zeros((mesh.size*2, 3))  # The 3D Forces
         self.Dp = None  # pOut - pIn
         self.converged = [False] * self.dof
-        # self.eRef = np.zeros(self.dof)
-        # self.bLayer = np.zeros(self.dof)  # Boundary layer
+        # Output variable mapping
+        self.varMap = {
+            "flowRates":        "Q0",
+            "pressures":        "px",
+            "flowRateSpeeds":   "dQ0",
+            "flowSpeeds":       "v0"
+        }
 
         # ----- Private attributes ----- #
         self._ti = None  # Current time
@@ -74,7 +79,6 @@ class nlLeakageFlow2D(flowModel, ABC):
         # self._gDof = self.regions[0].eigen().size
 
         # Initialize the boundary conditions
-
         # Pressure BC
         pBCDict = self._control['bc']['inlet']['p']
         self._pInBC = getattr(boundaryConditions, pBCDict['type'])(pBCDict)
@@ -90,13 +94,12 @@ class nlLeakageFlow2D(flowModel, ABC):
         # Output
         bufferSize = 1
         self.output = []
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'Q0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'dQ0.out', 'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'p0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'pIn.out', 'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'v0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'time.out', 'a+',buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'force.out', 'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['flowPath'] / 'Q0.out',  'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['flowPath'] / 'dQ0.out', 'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['flowPath'] / 'p0.out',  'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['flowPath'] / 'pIn.out', 'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['flowPath'] / 'v0.out',  'a+', buffering=bufferSize))
+        self.output.append(open(self._execution['paths']['flowPath'] / 'force.out', 'a+', buffering=bufferSize))
 
 
     # Flow rate equation initial condition
@@ -240,11 +243,10 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.output[2].write(" ".join(map(str, [self.px[0][0], self.px[1][0]])) + '\n')
         self.output[3].write(str(self._pIn) + '\n')
         self.output[4].write(" ".join(map(str, self.v0)) + '\n')
-        self.output[5].write(str(self._ti) + '\n')
         # force0 = si.simps(-self.px[0] , self._mesh.x)
         # force1 = si.simps(self.px[1], self._mesh.x)
         # force = si.simps(-self.px[0] + self.px[1], self._mesh.x)
-        # self.output[6].write(str(force) + '\n')
+        # self.output[5].write(str(force) + '\n')
 
     # Calculate some constants
     def constants(self):

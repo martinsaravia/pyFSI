@@ -19,18 +19,24 @@ plt.rcParams.update({
 })
 
 
-# plt.tight_layout()
-
-
-def loadFiles(fileList):
+def parLoadFiles(fileList):
     n = len(fileList)
     pool = Pool(2)
     result = pool.map(np.loadtxt, fileList)
     pool.close()
     return result
 
-    # self.axe.set_xticks([])
-    # self.axe.set_yticks([])
+def loadFiles(fileList):
+    n = len(fileList)
+    result = []
+    for file in fileList:
+        try:
+            data = np.loadtxt(file)
+        except:
+            data = np.loadtxt(file, dtype=np.complex)
+        result.append(data)
+
+    return result
 
 
 # Load files in parallel
@@ -73,10 +79,12 @@ class fsiPlot():
 
 
 class plotFromFile(fsiPlot):
-    def __init__(self, xFile, yFile, xIndexes=None, yIndexes=None, scatter=False):
+    def __init__(self, xFile, yFile, xIndexes=None, yIndexes=None, scatter=False, imaginary=False):
         super().__init__()
         data = loadFiles([xFile, yFile])
-
+        if imaginary:  # Reading complex number files
+            data[0] = np.real(data[0])
+            data[1] = np.imag(data[1])
         self.P = []
 
         # Number of plots

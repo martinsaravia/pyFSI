@@ -15,10 +15,12 @@ class flowModel(metaclass=ABCMeta):
     def __repr__(self):
         return 'fluidModel Abstract Class'
 
-    def __init__(self, execution, control, mesh, boundary):
+    def __init__(self, execution, control, mesh, boundary, time):
         """Constructor"""
 
         # ----- Public attribues ----- #
+        self.base = "flow"
+        self.name = control['name']
         self.dof = None  # Number of DOF of the model
         self.regions = []  # Regions comprising the domain
         self.vRef = None  # Reference velocity
@@ -26,13 +28,16 @@ class flowModel(metaclass=ABCMeta):
         self.dRef = None  # Reference inlet size
         self.dimNumbers = None
         self.output = []
+        self.path = execution['paths']['flowPath']  # Associated path
 
         # ----- Private attributes ----- #
         self._execution = execution
         self._control = control
         self._mesh = mesh
         self._boundary = boundary
+        self._updated = False
         self._fluid = None
+        self._time = time
         if execution['debug'] == 'yes':
             self._debug = True
         else:
@@ -77,4 +82,13 @@ class flowModel(metaclass=ABCMeta):
 
     def finish(self):
         self.closeOutput()
+
+    def updated(self):
+        return self._updated
+
+    def time(self):
+        return self._time
+
+
+
 

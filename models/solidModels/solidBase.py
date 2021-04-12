@@ -6,22 +6,25 @@ class solidModel(metaclass=ABCMeta):
     def __repr__(self):
         return 'solidModel Abstract Class'
 
-    def __init__(self, execution, control, mesh, name=None, debug=False):
+    def __init__(self, execution, control, mesh, time):
 
         # ----- Public attribues ----- #
-        self.name = name
+        self.base = "solid"
+        self.name = control['name']
         self.dof = None
-        self.output = []  # List of file objects
         self.lRef = None  # Reference length
         self.uRef = None  # Reference displacement
         self.vRef = None  # Reference velocity
         self.dimNumbers = None  # Dimensionless numbers
-        self._debug = debug
+        self.output = []  # List of file objects
+        self.path = execution['paths']['solidPath']  # Associated path
 
         # ----- Private attributes ----- #
         self._execution = execution
         self._control = control
         self._mesh = mesh
+        self._updated = False
+        self._time = time
         if execution['debug'] == 'yes':
             self._debug = True
         else:
@@ -57,3 +60,9 @@ class solidModel(metaclass=ABCMeta):
 
     def finish(self):
         self.closeOutput()
+
+    def updated(self):
+        return self._updated
+
+    def time(self):
+        return self._time

@@ -2,10 +2,14 @@ from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumber
 from abc import ABC, abstractmethod
 
 class fsiBase(ABC):
-    def __init__(self, execution, control, solid, flow):
+    def __init__(self, execution, control, solid, flow, time):
         # ----- Public attributes ----- #
+        self.base = "fsi"
+        self.name = control['name']
         self.dof = None  # Number of degrees of freedom
         self.name = control['name']
+        self.path = execution['paths']['fsiPath']  # Associated path
+
         self.output = []
         # Dimensionless numbers
         self.dimNumbers = None
@@ -15,6 +19,7 @@ class fsiBase(ABC):
         self._flow = flow
         self._execution = execution
         self._control = control
+        self._time = time
         if execution['debug'] == 'yes':
             self._debug = True
         else:
@@ -49,4 +54,7 @@ class fsiBase(ABC):
 
     def flow(self):
         return self._flow
+
+    def time(self):
+        return self._time
 
