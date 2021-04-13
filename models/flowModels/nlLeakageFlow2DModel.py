@@ -33,8 +33,8 @@ class nlLeakageFlow2D(flowModel, ABC):
     def __repr__(self):
         return 'leakageFlow2DModel '
 
-    def __init__(self, execution, control, mesh, boundary,  name='NN'):
-        super().__init__(execution, control, mesh, boundary)
+    def __init__(self, execution, control, mesh, boundary, time,  name='NN'):
+        super().__init__(execution, control, mesh, boundary, time)
 
         # ----- Public attributes ----- #
         self.dof = 2  # Number of Q equations (1 per region)
@@ -89,18 +89,6 @@ class nlLeakageFlow2D(flowModel, ABC):
         self._zetaInBC = getattr(boundaryConditions, zetaBCDict['type'])(zetaBCDict)
         zetaBCDict = self._control['bc']['outlet']['zeta']
         self._zetaOutBC = getattr(boundaryConditions, zetaBCDict['type'])(zetaBCDict)
-
-
-        # Output
-        bufferSize = 1
-        self.output = []
-        self.output.append(open(self._execution['paths']['flowPath'] / 'Q0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['flowPath'] / 'dQ0.out', 'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['flowPath'] / 'p0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['flowPath'] / 'pIn.out', 'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['flowPath'] / 'v0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['flowPath'] / 'force.out', 'a+', buffering=bufferSize))
-
 
     # Flow rate equation initial condition
     def setInitialConditions(self):
@@ -233,20 +221,6 @@ class nlLeakageFlow2D(flowModel, ABC):
         size = region.data['s']
         Wv = 0.25 * self.f0[i] * si.cumtrapz(fx / size**3, self._mesh.x, initial=0)
         return Wv
-
-    # Write files
-    def write(self):
-        self.output[0].write(" ".join(map(str, self.Q0)) + '\n')
-        self.output[1].write(" ".join(map(str, self.dQ0)) + '\n')
-        # self.output[2].write(" ".join(map(str, self.px[0])) + '\n')
-        # self.output[3].write(" ".join(map(str, self.px[1])) + '\n')
-        self.output[2].write(" ".join(map(str, [self.px[0][0], self.px[1][0]])) + '\n')
-        self.output[3].write(str(self._pIn) + '\n')
-        self.output[4].write(" ".join(map(str, self.v0)) + '\n')
-        # force0 = si.simps(-self.px[0] , self._mesh.x)
-        # force1 = si.simps(self.px[1], self._mesh.x)
-        # force = si.simps(-self.px[0] + self.px[1], self._mesh.x)
-        # self.output[5].write(str(force) + '\n')
 
     # Calculate some constants
     def constants(self):

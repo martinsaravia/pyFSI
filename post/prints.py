@@ -69,3 +69,9 @@ def printArray(array):
                    showindex=True,
                    numalign="decimal",
                    stralign="center"))
+
+
+def printError(message, width=69):
+    stars = '*' * width
+    pad = (width + len(message)) // 2
+    print(f'{stars}\n{message:>{pad}}\n{stars}')

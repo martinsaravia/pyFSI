@@ -18,8 +18,10 @@ class solverBase:
         self._fsi = fsi
         self._odb = odb
         self._time = fsi.time()
-        self._control = fsi.execution()['solver']
         self._execution = fsi.execution()
+
+        # Public Attributes
+        self.control = fsi.execution()['solver']
 
         # Output
         bufferSize = 1
@@ -29,15 +31,6 @@ class solverBase:
     # Abstract methods
     @abstractmethod
     def solve(self):
-        pass
-
-    @abstractmethod
-    def advance(self, tspan):
-        pass
-
-    # Write the output of every object
-    @abstractmethod
-    def write(self):
         pass
 
     # Getters

@@ -9,12 +9,12 @@ class eigen(solverBase):
 
     def solve(self):
         time = self._time
-        while time.value <= time.endTime:
+        while time.value <= time.end:
+            time.advance()
             print("  Solving the MFSI case:", self._fsi.name, "for time ", time.value)
             self._fsi.update()
             evalues, evectors = np.linalg.eig(self._fsi.S)
             self._fsi.ES = es.eigenSystem(evalues, evectors, sort=True)
             self._odb.write()
-            time.advance()
 
         self._odb.close()

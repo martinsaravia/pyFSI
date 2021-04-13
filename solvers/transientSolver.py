@@ -6,29 +6,25 @@ from pyFSI.solvers.solverBase import solverBase
 
 # Solver for transient FSI simulations
 class transient(solverBase):
-    def __init__(self, fsi):
-        super().__init__(fsi)
+    def __init__(self, fsi, odb):
+        super().__init__(fsi, odb)
 
     def solve(self):
-        time = self._execution['time']
-        initialConditions = self.fsi.state
-        tspan = np.array([time['startTime'], time['startTime'] + time['deltaT']])
-        dt = time['deltaT']
-
-        # Choose integration scheme
-        while tspan[1] <= time['endTime']:
-            print("Solving for time: ", tspan[1])
-            getattr(self, self.control['coupling'])(tspan)  # Call the implicit or the explicit step
-            self.write(tspan[1])
-            tspan += dt
-        self.fsi.finish()
+        time = self._time
+        # Integrate
+        while time.value <= time.end:
+            time.advance()
+            print("---> Solving for time:", time.value)
+            getattr(self, self.control['coupling'])(time.span)  # Choose integration scheme
+            self._odb.write()
+        self._odb.close()
 
     def implicit(self, tspan):
         for n in range(1, self.control['subcycles'] + 1):
             pass
 
     def explicit(self, tspan):
-        fsi = self.fsi
+        fsi = self._fsi
 
         # 1) Solve the flow
         # print("---> Solving the flow")
@@ -57,7 +53,3 @@ class transient(solverBase):
         # 4) Update the region geometry
         # print("---> Updating the region position, velocities and accelerations")
         fsi.update('regions', None, None)
-
-    def write(self, t):
-        # print("---> Writing results")
-        self.fsi.write()
