@@ -12,23 +12,30 @@
         },
         "time":
         {
-            "stepping":         "parametric",
-            "parameter":        "inletFlowRate",
-            "startParameter":    1.0E-4,
-            "endParameter":      5.2E-2,
-            "steps":             100
+            "stepping":     "parametric",
+            "parameter":    "inletFlowRate",
+            "startTime":    0.0,
+            "endTime":      1.0,
+            "deltaT":       1E-2
         },
+		"output": 
+		{
+			"flujo": 		 ["flowRates", "flowSpeeds"],
+			"viga": 		 ["naturalFrequencies"],
+			"interaccion":   ["eigenValues", "eigenVectors"]
+		},
         "debug": "yes"
     },
 
-    "mesh":
+ 
+   "mesh":
     {
-        "type": "from3Parameters",
-        "xi": 0.0,
-        "xf": 0.2,
-        "dx": 0.001
+		"name": 	"malla",
+        "type": 	"from3Parameters",
+        "xi": 		0.0,
+        "xf": 		0.2,
+        "dx": 		0.001
     },
-
 
     "boundary":[
     {
@@ -90,8 +97,8 @@
         "bc":
         {
             "type":     "clampedFree",
-            "y0":  0.0,
-            "dy0": 0.0
+            "y0":  		0.0,
+            "dy0": 		0.0
         }
     },
 
@@ -122,23 +129,39 @@
         }],
         "bc" :
         {
-            "type":			"inletFlowRate",
-            "inlet":
-            {
-                "Q0":    "parametric",
-                "zeta":  1.0
-            },
+           "inlet":
+	        {
+	            "Q0":    
+				{
+					"type":   		   "tabulatedFixedValue",
+					"interpolation":   "linear",
+					"time":   			[0.0,     1.0   ], 
+					"value":  			[1.0E-4,  5.2E-2]
+				},
+			    "zeta":  
+				{
+					"type": 			"fixedValue",
+					"value":       		1.0
+				}
+			},
             "outlet":
             {
-                "type": "outFlow",
-                "zeta": 0.0
+	            "Q0":    
+				{
+					"type":   		   "outFlow"
+				},
+			    "zeta":  
+				{
+					"type":   		   "fixedValue",
+					"value":   			0.0
+				}
             }
         }
     },
 
     "fsi":
     {
-        "name":         "Tosi Figure 3.1",
+        "name":         "interaccion",
         "formulation":  "lfb1D",
         "type":         "Saravia"
     }

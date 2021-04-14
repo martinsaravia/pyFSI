@@ -58,3 +58,6 @@ class fsiBase(ABC):
     def time(self):
         return self._time
 
+    def numbers(self):
+        return self.dimNumbers
+

@@ -21,9 +21,9 @@ from pyFSI.execution import io, time
 from pyFSI.mesh.fsiMesh1D import fsiMesh1D
 
 
-class mfsiCase:
+class MFSICase:
     def __init__(self, caseName):
-        banner("pyFSI v0.2.5 - Martin Saravia 10-3-2021")        # Timing starts
+        banner("pyFSI v0.3.0 - Martin Saravia 10-3-2021")        # Timing starts
 
         # Public attributes
         self.DICT = None  # The input dictionary
@@ -72,9 +72,19 @@ class mfsiCase:
         paths['solidPath'] = casePath / "solid"
         paths['flowPath'] = casePath / "flow"
         paths['fsiPath'] = casePath / "fsi"
-        paths['solidPath'].mkdir(parents=True, exist_ok=True)
-        paths['flowPath'].mkdir(parents=True, exist_ok=True)
-        paths['fsiPath'].mkdir(parents=True, exist_ok=True)
+        # Copy the solid.0 or fluid.0 fsi.0 to solid or fluid or fsi
+        if os.path.isdir(paths['casePath'] / "solid.0"):
+            shutil.copytree(paths['casePath'] / "solid.0", paths['solidPath'])
+        else:
+            paths['solidPath'].mkdir(parents=True, exist_ok=True)
+        if os.path.isdir(paths['casePath'] / "flow.0"):
+            shutil.copytree(paths['casePath'] / "flow.0", paths['flowPath'])
+        else:
+            paths['flowPath'].mkdir(parents=True, exist_ok=True)
+        if os.path.isdir(paths['casePath'] / "fsi.0"):
+            shutil.copytree(paths['casePath'] / "fsi.0", paths['fsiPath'])
+        else:
+            paths['fsiPath'].mkdir(parents=True, exist_ok=True)
 
         self.DICT['execution']['paths'] = paths
 
@@ -92,7 +102,7 @@ class mfsiCase:
         print("Preprocessing...")
 
         # Create the object registry
-        self.OREG = io.objectRegistry()
+        self.OREG = io.ObjectRegistry()
 
         self.TIME = time.time(self.DICT["execution"])
         self.OREG.append(self.TIME)

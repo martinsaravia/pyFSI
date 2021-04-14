@@ -1,6 +1,6 @@
 
 {
-    "info": "Analysis of critical velocity of Figures 3.2 and 3.3 of Tosi's Thesis",
+    "info": "Transient analysis of the example presented in Figures 3.2 and 3.3 of Tosi's Thesis",
 
 
     "execution":
@@ -19,15 +19,14 @@
         "time":
         {
             "stepping":     "automatic",
-            "startTime":    0,
+            "startTime":    0.0,
             "endTime":      2.0,
             "deltaT":       1E-4
         },
 		"output": 
 		{
-			"flow":  ["flowRate", "flowSpeed"],
-			"solid": ["wn"],
-			"fsi":   ["iEigenValues", "rEigenValues", "eigenVectors"]
+			"flujo": 		 ["flowRates", "flowSpeeds"],
+			"viga": 		 ["displacements", "velocities", "accelerations"]
 		},
         "debug":"yes"
     },
@@ -35,10 +34,11 @@
 
     "mesh":
     {
+		"name": "malla",
         "type": "from3Parameters",
-        "xi": 0.0,
-        "xf": 0.1,
-        "dx": 0.002
+        "xi": 	0.0,
+        "xf": 	0.1,
+        "dx": 	0.002
     },
 
 
@@ -93,11 +93,11 @@
         },
         "solution":
         {
-            "type":     "modal",
-            "method":   "analytic",
-            "modes":    4,
-			"normalize": "no",
-            "damping":  [0.05, 0.03]
+            "type":     	"modal",
+            "method":   	"analytic",
+            "modes":    	4,
+			"normalize": 	"no",
+            "damping":  	[0.05, 0.03]
         },
         "bc":
         {
@@ -112,7 +112,6 @@
         "name":        "flujo",
         "formulation": "nlLeakageFlow2D",
         "type":        "dualChannel",
-        "accel":       "no",
         "units":       "m",
         "fluid":
         {
@@ -168,7 +167,7 @@
 
 	"fsi":
 	{
-	    "name":         "nlTest",
+	    "name":         "interaccion",
 	    "formulation":  "nlLFB1D"
 	}
 }

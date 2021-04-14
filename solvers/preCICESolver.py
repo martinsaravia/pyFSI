@@ -20,14 +20,14 @@ from pyFSI.solvers.solverBase import solverBase
 
 # Solver for transient FSI simulations
 class preCICE(solverBase):
-    def __init__(self, fsi):
-        super().__init__(fsi)
+    def __init__(self, fsi, odb):
+        super().__init__(fsi, odb)
         self.cleanCase()  # Clean the case for optimal linking
 
     def solve(self):
-        interface = self.fsi.interface
-        meshes = self.fsi.meshes
-        flow = self.fsi.flow()
+        interface = self._fsi.interface
+        meshes = self._fsi.meshes
+        flow = self._fsi.flow()
 
         # preCICE defines timestep size of solver via precice-config.xml
         precice_dt = interface.initialize()
@@ -96,18 +96,20 @@ class preCICE(solverBase):
             if interface.is_action_required(prc.action_read_iteration_checkpoint()):  # i.e. not yet converged
                 interface.mark_action_fulfilled(prc.action_read_iteration_checkpoint())
             else:  # converged, timestep complete
-                self.fsi.flow().write()
+                self._odb.write()
                 totalTime += precice_dt
 
         print("Exiting precice...")
 
         interface.finalize()
 
+        self._odb.close()
+
         return flow
 
     # Clean the case (neccessary for optimal linking betwen the participants)
     def cleanCase(self):
-        print("--> Allcleaning...")
+        print("--> Allcleaning preCICE...")
         for p in pathlib.Path(".").glob("P*.log"):
             p.unlink()
         try:

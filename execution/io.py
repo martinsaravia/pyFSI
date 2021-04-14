@@ -61,7 +61,7 @@ class IODataBase:
         for file in self.files:
             file.close()
 
-class objectRegistry:
+class ObjectRegistry:
     """
     A class for registering all objects. I has a get method for retrieving an object by name.
     """

@@ -8,7 +8,6 @@ class boundary1DBeam(boundary1D):
         super().__init__(beam.mesh(), control['name'])
 
         # ----- Public attributes ----- #
-        self.name = control['name']
 
         # ----- Private attributes ----- #
         self._beam = beam

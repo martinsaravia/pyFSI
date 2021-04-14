@@ -43,15 +43,10 @@ class lfb1D(fsiBase):
             "eigenVectors": "ES.evectors()"
         }
 
-
-        # Initialize the eigenvalues and eigenvectors output files
-        # self.output.append(open(self._execution['paths']['fsiPath'] / 'realValues.out',  'a+'))
-        # self.output.append(open(self._execution['paths']['fsiPath'] / 'imagValues.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['fsiPath'] / 'vectors.out', 'a+'))
-
     def update(self):
         # Update the flow, the solid is not updated
         self._flow.update()
+        self.calcNumbers()
         self.assemble()
 
     def assemble(self):
@@ -183,7 +178,7 @@ class stiffnessRatio(dimensionlessNumber):
     def __init__(self, fsi):
         super().__init__()
         self.type = "Kr"
-        kf = fsi.flow().fluid()['rho'] * fsi.flow().qx0**2 * fsi.flow().lRef**3 / fsi.flow().dRef**2
+        kf = fsi.flow().fluid()['rho'] * fsi.flow().Q0**2 * fsi.flow().lRef**3 / fsi.flow().dRef**2
         ks = fsi.solid().material()['E'] * fsi.solid().control()['I']   # Solid mass
         self.value = ks / kf
 
