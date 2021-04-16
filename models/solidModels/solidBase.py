@@ -1,6 +1,6 @@
 from abc import ABCMeta
 from pyFSI.models.properties.materialProperties import solids as dataBase
-from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.models.properties.dimensionlessNumbers import *
 
 class solidModel(metaclass=ABCMeta):
     def __repr__(self):
@@ -15,9 +15,10 @@ class solidModel(metaclass=ABCMeta):
         self.lRef = None  # Reference length
         self.uRef = None  # Reference displacement
         self.vRef = None  # Reference velocity
-        self.dimNumbers = None  # Dimensionless numbers
+        self.dimNumbers = {}  # Dimensionless numbers
         self.output = []  # List of file objects
         self.path = execution['paths']['solidPath']  # Associated path
+        self.varMap = {}
 
         # ----- Private attributes ----- #
         self._execution = execution
@@ -39,7 +40,9 @@ class solidModel(metaclass=ABCMeta):
 
     # Calculate the dimensionless numbers
     def calcNumbers(self):
-        self.dimNumbers = makeDimensionlessNumbers(solid=self)
+        self.dimNumbers["Dp"] = displacementNumber(self)
+        self.dimNumbers["Eg"] = elastoGravityNumber(self)
+
 
     # Getters
     def execution(self):

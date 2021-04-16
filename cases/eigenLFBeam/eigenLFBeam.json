@@ -20,7 +20,7 @@
         },
 		"output": 
 		{
-			"flujo": 		 ["flowRates", "flowSpeeds"],
+			"flujo": 		 ["flowRates", "flowSpeeds", "numbers"],
 			"viga": 		 ["naturalFrequencies"],
 			"interaccion":   ["eigenValues", "eigenVectors"]
 		},

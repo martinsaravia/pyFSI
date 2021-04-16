@@ -1,9 +1,10 @@
 """ Input-Output Module
 This module holds the classes used for writing input and output data.
 """
+import sys
+from abc import ABC, abstractmethod
 import numpy as np
 from pyFSI.execution.errors import error
-import sys
 
 class IOFile:
     """
@@ -14,27 +15,79 @@ class IOFile:
         filename = variable + ".out"
         self.location = obj.path / filename
         self.obj = obj  # Object from which we read the data
+        # Get the variable
         try:
             self.var = obj.varMap[variable]
         except KeyError:
             error("ERROR: Variable: " + variable + " is not available for output for object named: " + obj.name + "\n" +
                   "       Valid variables are: " + str(list(obj.varMap.keys()))[:])
 
-        self.expr = "self.obj." + self.var  # Expression to evaluate the variable value
+        self.expr = "self.obj." + self.var  # Expression to execute to evaluate the variable value
 
         self.file = open(self.location,
                          mode,
                          buffering=bufferSize)
 
-    def write(self):
+        # Choose the writer
         value = eval(self.expr)
         if isinstance(value, np.floating) or isinstance(value, float) or isinstance(value, int):
-            self.file.write(str(value) + '\n')
+            self.writer = NumWriter(obj, self.file)
+        elif isinstance(value, dict):  # If list, split it)
+            self.writer = DictWriter(obj, self.file, eval(self.expr))
         else:
-            self.file.write(" ".join(map(str, value)) + '\n')  # If list, split it
+            self.writer = ListWriter(obj, self.file)
+
+    def write(self):
+        value = eval(self.expr)
+        self.writer.line(self.file, value)
 
     def close(self):
         self.file.close()
+
+class Writer(ABC):
+    """ Base class for writing data to files"""
+    def __init__(self, obj, file):
+        self.header(obj, file)
+
+    def header(self, obj, file, data=None):
+        try:
+            name = obj.name
+        except:
+            name = "object"
+        file.write('#' + name + '\n')
+
+    @abstractmethod
+    def line(self, file, value):
+        pass
+
+class ListWriter(Writer):
+    def __init__(self, obj, file):
+        super().__init__(obj, file)
+
+    def line(self, file, value):
+        file.write(" ".join(map(str, value)) + '\n')  # If list, split it
+
+class NumWriter(Writer):
+    def __init__(self, obj, file):
+        super().__init__(obj, file)
+
+    def line(self, file, value):
+        file.write(str(value) + '\n')
+
+class DictWriter:
+    def __init__(self, obj, file, dict):
+        self.header(obj, file, dict)
+
+    def header(self, obj, file, dict):
+        file.write('# ')
+        for k, v in dict.items():
+            file.write(k + 17 * ' ')
+        file.write('\n')
+
+    def line(self, file, dict):
+        for k, v in dict.items():
+            file.write(str(v) + 4 * " ")
+        file.write('\n')
 
 
 class IODataBase:

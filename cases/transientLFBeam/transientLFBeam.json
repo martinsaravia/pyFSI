@@ -25,8 +25,8 @@
         },
 		"output": 
 		{
-			"flujo": 		 ["flowRates", "flowSpeeds"],
-			"viga": 		 ["displacements", "velocities", "accelerations"]
+			"flujo": 		 ["flowRates", "flowSpeeds", "numbers"],
+			"viga": 		 ["displacements", "velocities", "accelerations", "numbers"]
 		},
         "debug":"yes"
     },

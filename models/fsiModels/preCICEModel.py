@@ -23,12 +23,6 @@ class preCICE(fsiBase):
                                self.interface,
                                self.flow().boundary()))
 
-    def write(self):
-        super.write()
-
-    def finish(self):
-        super.finish()
-
 # A class to handle the mesh object in preCICE, actually it is a cloud of points
 # on which the coupled variables are projected.
 class preciceMesh:

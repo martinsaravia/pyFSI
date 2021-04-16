@@ -99,13 +99,6 @@ class nlLFB1D(fsiBase):
         self.dimNumbers['Gr'] = gapRatio(self)
         self.dimNumbers['Vp'] = viscousParameter(self)
 
-    def write(self):
-        self._solid.write()
-        self._flow.write()
-
-    def finish(self):
-        super().finish()
-
 
 # Dimensional numbers of this model
 class massRatio(dimensionlessNumber):

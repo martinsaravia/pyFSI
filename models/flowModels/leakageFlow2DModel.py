@@ -48,10 +48,8 @@ class leakageFlow2D(flowModel):
         self.Eq = None
         self.Gq = None
         # Output variable mapping
-        self.varMap = {
-            "flowRates":    "Q0",
-            "flowSpeeds":   "v0"
-        }
+        self.varMap["flowRates"]  = "Q0"
+        self.varMap["flowSpeeds"] = "v0"
 
         # ----- Private attributes ----- #
         self._th = 1
@@ -108,10 +106,9 @@ class leakageFlow2D(flowModel):
         self.lRef = self._mesh.L
         self.vRef = self.Q0 / self.dRef
         self.eRef = self.dRef / self.lRef
-        super().calcNumbers()
-        self.calcNumbers()
         self.bLayer = boundaryLayer(self, xPosition=self.lRef)
         self.v0 = self.Q0 / self.dRef
+        super().calcNumbers()
 
         # Nonlinear profile (xix), viscous friction (f0) and derivative of f0 (eta)
         Rd = self.dimNumbers['Rd'].value

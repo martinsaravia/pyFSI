@@ -6,7 +6,7 @@ Only one boundary can be flexible
 
 from abc import ABCMeta, abstractmethod
 from pyFSI.models.properties.materialProperties import fluids as db
-from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.models.properties.dimensionlessNumbers import *
 from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
 
 
@@ -26,9 +26,12 @@ class flowModel(metaclass=ABCMeta):
         self.vRef = None  # Reference velocity
         self.lRef = None  # Reference length
         self.dRef = None  # Reference inlet size
-        self.dimNumbers = None
         self.output = []
         self.path = execution['paths']['flowPath']  # Associated path
+        self.dimNumbers = {}  # Dimensionless numbers
+        self.varMap = {
+            "numbers":      "dimNumbers"
+        }
 
         # ----- Private attributes ----- #
         self._execution = execution
@@ -56,7 +59,9 @@ class flowModel(metaclass=ABCMeta):
     # Calculate the dimensionless numbers
     def calcNumbers(self):
         """ Calculates dimensionless numbers"""
-        self.dimNumbers = makeDimensionlessNumbers(flow=self)
+        self.dimNumbers["Re"] = ReynoldsNumber(self)
+        self.dimNumbers["Rd"] = ReynoldsNumber(self, type="Rd")
+        self.dimNumbers["Fr"] = FroudeNumber(self)
 
     # Pure virtual methods
 

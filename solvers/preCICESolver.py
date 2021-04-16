@@ -1,9 +1,9 @@
 # --------------------------------------------------------------------------- #
-#    p    #     version: 0.1
+#    p    #     version: 0.3.0
 #    y    #     date: 07/12/2020
 #    F    #     author: Martin Saravia
-#    S    #     description: BE Beam class
-#    I    #     return: solidModel object
+#    S    #     description: preCICE solver
+#    I    #     return: solver object
 # --------------------------------------------------------------------------- #
 # Notes:
 #   Staggered solver for fsi using preCICE and Calculix

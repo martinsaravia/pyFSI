@@ -62,13 +62,11 @@ class bernoulliEulerBeam(solidModel):
         self.uRef = None  # Reference something
         self.vRef = None  # Reference velocity
         # Output variable mapping
-        self.varMap = {
-            "naturalFrequencies":       "eigen.values",
-            "displacements":            "y['mid']",
-            "velocities":               "dy['mid']",
-            "accelerations":            "ddy['mid']",
-            "numbers":                  "numbers"
-        }
+        self.varMap["naturalFrequencies"] = "eigen.values"
+        self.varMap["displacements"] = "y['mid']"
+        self.varMap["velocities"] = "dy['mid']"
+        self.varMap["accelerations"] = "ddy['mid']"
+        self.varMap["numbers"] = "dimNumbers"
 
         # ----- Private attributes ----- #
         # Flags
@@ -85,19 +83,6 @@ class bernoulliEulerBeam(solidModel):
         self._stateVectorSystem()  # Calculate vectors k, m, c and F
 
         self.setInitialConditions()
-
-        # Initialize the output files
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'yTop.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'yMid.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'yBot.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'dyMid.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'ddyMid.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'a.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'da.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'dda.out', 'a+'))
-        # self.output.append(open(self._execution['paths']['solidPath'] / 'x.out', 'a+'))         # Save the mesh
-        # self.output[8].write(" ".join(map(str, self._mesh.x)) + '\n')
-        # self.output[8].close()
 
     # Set the initial conditions
     def setInitialConditions(self):

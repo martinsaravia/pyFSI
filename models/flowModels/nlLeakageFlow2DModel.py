@@ -49,12 +49,10 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.Dp = None  # pOut - pIn
         self.converged = [False] * self.dof
         # Output variable mapping
-        self.varMap = {
-            "flowRates":        "Q0",
-            "pressures":        "px",
-            "flowRateSpeeds":   "dQ0",
-            "flowSpeeds":       "v0"
-        }
+        self.varMap["flowRates"] = "Q0"
+        self.varMap["pressures"] = "px"
+        self.varMap["flowRateSpeeds"] = "dQ0"
+        self.varMap["flowSpeeds"] = "v0"
 
         # ----- Private attributes ----- #
         self._ti = None  # Current time
@@ -224,6 +222,7 @@ class nlLeakageFlow2D(flowModel, ABC):
 
     # Calculate some constants
     def constants(self):
+        self.calcNumbers()
         for i, region in enumerate(self.regions):
             self.dRef[i] = region.data['s'][0]  # Reference channel size
             self.eRef[i] = self.dRef[i] / self.lRef
@@ -242,3 +241,6 @@ class nlLeakageFlow2D(flowModel, ABC):
                 self.f0[i] = 0.26 * self.Rd[i].value ** -0.24
                 self.xix[i] = 1.0
                 # self.eta = -(0.0624 * self.Rd.value ** -0.24) / Q0
+
+    def calcNumbers(self):
+        super().calcNumbers()

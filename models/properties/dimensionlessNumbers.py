@@ -1,36 +1,20 @@
+""" This module contains all the classes for calculating dimensionless numbers"""
+
 from pyFSI.models.properties.materialProperties import constants
 
 
-def makeDimensionlessNumbers(solid=None, flow=None, fsi=None, numbers=None):
-    # Add solid dimensionless numbers
-    if numbers is None:  # Mutable object cannot be used as default argument
-        numbers = {}     # otherwise a new one is not created (do not use number=None as argument)..
-    if flow:
-        numbers["Re"] = ReynoldsNumber(flow)
-        numbers["Rd"] = ReynoldsNumber(flow, type="Rd")
-        numbers["Fr"] = FroudeNumber(flow)
-    # Add solid dimensionless numbers
-    if solid:
-        numbers["Dp"] = displacementNumber(solid)
-        numbers["Eg"] = elastoGravityNumber(solid)
-    # Add solid dimensionless numbers
-    if fsi:
-        numbers["Cy"] = CauchyNumber(fsi)
-        numbers["Ms"] = massNumber(fsi)
-        numbers["Vr"] = reducedVelocityNumber(fsi)
-
-    return numbers
-
-
-# Dimensionles numbers classes
 class dimensionlessNumber:
-    def __init__(self):
-        pass
+    """ Base class for dimensionless numbers"""
+    def __init__(self, value=None):
+        self.value = value
+
+    def __str__(self):
+        return str(self.value)
 
     def info(self):
         print("--> " + self.type + " number is: " + "%10.3E" % self.value)
 
-# Fluid numbers
+
 class ReynoldsNumber(dimensionlessNumber):
     def __init__(self, flow, L=None, V=None, type="Re"):
         super().__init__()
@@ -60,6 +44,7 @@ class ReynoldsNumber(dimensionlessNumber):
         if self.value >= 2000:
             flowRegime = "turbulent"
         return flowRegime
+
 
 class FroudeNumber(dimensionlessNumber):
     def __init__(self, flow):

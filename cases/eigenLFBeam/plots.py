@@ -3,7 +3,6 @@ from pyFSI.post.anim import *
 
 
 # Plot the eigenvalue progresssion
-plt.figure()
 xfilePath = pathlib.Path(__file__).parent.absolute()/'fsi'/'eigenValues.out'
 yfilePath = pathlib.Path(__file__).parent.absolute()/'fsi'/'eigenValues.out'
 

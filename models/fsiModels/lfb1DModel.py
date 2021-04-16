@@ -36,12 +36,13 @@ class lfb1D(fsiBase):
         self.Et = np.zeros(esize)
         self.Gt = None
         self.Gb = None
+        self.ES = es.eigenSystem([0], [0])  # Initialize the system to zero for correct file writing
         self.norm = np.zeros((esize, esize))  # Eigenvector Norm
         self.S = np.zeros((self._size, self._size))  # System matrix
-        self.varMap = {
-            "eigenValues": "ES.evalues()",
-            "eigenVectors": "ES.evectors()"
-        }
+        # Output variables
+        self.varMap["eigenValues"] = "ES.evalues()"
+        self.varMap["eigenVectors"] = "ES.evectors()"
+
 
     def update(self):
         # Update the flow, the solid is not updated
@@ -150,18 +151,6 @@ class lfb1D(fsiBase):
         self.dimNumbers['Kr'] = stiffnessRatio(self)
         self.dimNumbers['Gr'] = gapRatio(self)
         self.dimNumbers['Vp'] = viscousParameter(self)
-
-    def finish(self):
-        super().finish()
-
-    def write(self, solution):
-        # Write the eigenvalues and eigenvectors of the FSI system
-        # realValues = np.real(solution.evalues())
-        # imagValues = np.imag(solution.evalues())
-        # self.output[0].write(" ".join(map(str, realValues)) + '\n')
-        # self.output[1].write(" ".join(map(str, imagValues)) + '\n')
-        # self.output[2].write(" ".join(map(str, solution.evectors())) + '\n')
-        pass
 
 
 # Dimensional numbers of this model
