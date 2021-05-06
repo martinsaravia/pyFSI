@@ -1,6 +1,7 @@
 import pandas as pd
 from tabulate import tabulate
 import numpy as np
+import pprint
 
 def printEigen(values, vectors):
     pd.set_option('display.max_columns', 12)
@@ -60,8 +61,13 @@ def printNumbers(solution):
         n.info()
 
 
-def printArray(array):
+def printArray(array, name=False):
     dfvec = pd.DataFrame(array)
+    if name:
+        header = "+----+-----------+------------+------------+"
+        spaces = int((len(header) - len(name)) / 2)
+        print(header, "\n", " " * spaces, name)
+
     print(tabulate(dfvec,
                    headers='keys',
                    tablefmt='psql',
@@ -69,3 +75,12 @@ def printArray(array):
                    showindex=True,
                    numalign="decimal",
                    stralign="center"))
+
+def printNumbers(obj):
+    for key, val in obj.dimNumbers.items():
+        pprint.pprint(val.info())
+
+def printError(message, width=69):
+    stars = '*' * width
+    pad = (width + len(message)) // 2
+    print(f'{stars}\n{message:>{pad}}\n{stars}')

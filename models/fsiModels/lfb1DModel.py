@@ -7,22 +7,20 @@ from pyFSI.vectors.eigen import eigenSystem as es
 from pyFSI.models.fsiModels.fsiBase import fsiBase
 from pyFSI.models.properties.dimensionlessNumbers import dimensionlessNumber
 
+
 class lfb1D(fsiBase):
     def __repr__(self):
-        return 'lfb1D '
+        return 'lfb1D'
 
-    def __init__(self, execution, control, beam, flow):
-        super().__init__(execution, control, beam, flow)
+    def __init__(self, execution, control, solid, flow, time):
+        super().__init__(execution, control, solid, flow, time)
         if self._debug:
             print("     WARNING: Region names are hardcoded.")
 
-        # Time and parametric info
-        # self.ti = execution['time']['ti']
-        #self.pi = execution['parameters']['pi']
-
         # Size of the state-space eigen matrix
-        esize = beam.eigen.size
-        self._size = esize * 2 + 2
+        esize = solid.eigen.size
+        self._esize = esize
+        self._size = self._esize * 2 + 2
 
         # Initialize the system matrices
         self.K = np.zeros((esize, esize))  # Mass
@@ -38,79 +36,80 @@ class lfb1D(fsiBase):
         self.Et = np.zeros(esize)
         self.Gt = None
         self.Gb = None
+        self.ES = es.eigenSystem([0], [0])  # Initialize the system to zero for correct file writing
         self.norm = np.zeros((esize, esize))  # Eigenvector Norm
         self.S = np.zeros((self._size, self._size))  # System matrix
-        self.ES = None
+        # Output variables
+        self.varMap["eigenValues"] = "ES.evalues()"
+        self.varMap["eigenVectors"] = "ES.evectors()"
 
-        # Initialize the eigenvalues and eigenvectors output
-        self.output.append(open(self._execution['paths']['fsiPath'] / 'realValues.out',  'a+'))
-        self.output.append(open(self._execution['paths']['fsiPath'] / 'imagValues.out', 'a+'))
-        self.output.append(open(self._execution['paths']['fsiPath'] / 'vectors.out', 'a+'))
 
-        # Assemble the fsi modal matrices K, C and M
-        self.assemble(beam, flow)
+    def update(self):
+        # Update the flow, the solid is not updated
+        self._flow.update()
+        self.calcNumbers()
+        self.assemble()
 
-        # Calculate the eigenvaluess and eigenvectors
-        self.calculate()
+    def assemble(self):
+        # Aliases
+        solid = self._solid
+        flow = self._flow
+        esize = self._esize
 
-    def assemble(self, beam, flow):
-        # size of the eigensystem
-        esize = beam.eigen.size
-        # Make the norm
-        phiTphi = np.tensordot(beam.eigen.vectors, beam.eigen.vectors, axes=0)
-        # Construct the norm matrix (assume orthogonality of modes, only diagonal
-        # elements are calculated)
-        for i in range(esize):
-            for j in range(esize):
-                self.norm[i, j] = si.simps(phiTphi[i, j], beam.mesh().x)
+        # Calculate the norm
+        # phiTphi = np.tensordot(solid.eigen.vectors, solid.eigen.vectors, axes=0)
+        # # Construct the norm matrix (assume orthogonality of modes, only diagonal
+        # # elements are calculated)
+        # for i in range(esize):
+        #     for j in range(esize):
+        #         self.norm[i, j] = si.simps(phiTphi[i, j], solid.mesh().x)
 
-        # Fill the system Matrices
+        # Assemble the system matrices
         for i in range(0, esize):
-            gi = beam.eigen.vectors[i]
-            ki = beam.k()[i] + flow.K()[i]
-            ci = beam.c()[i] + flow.C()[i]
-            mi = beam.m()[i] + flow.M()[i]
-
+            gi = solid.eigen.vectors[i]
+            ki = solid.k[i] + flow.k[i]
+            ci = solid.c[i] + flow.c[i]
+            mi = solid.m[i] + flow.m[i]
             # Galerkin discretization
             for j in range(0, esize):
-                gj = beam.eigen.vectors[j]
-                self.K[i, j] = -si.simps(ki * gj, beam.mesh().x)
-                self.C[i, j] = -si.simps(ci * gj, beam.mesh().x)
-                self.M[i, j] = si.simps(mi * gj, beam.mesh().x)
-
+                gj = solid.eigen.vectors[j]
+                self.K[j, i] = -si.simps(ki * gj, solid.mesh().x)
+                self.C[j, i] = -si.simps(ci * gj, solid.mesh().x)
+                self.M[j, i] = si.simps(mi * gj, solid.mesh().x)
 
         # System Region Vectors
-        Gq = flow.Gq()
-        self.Gt = Gq['channelTop']
-        self.Gb = Gq['channelBot']
+        self.Gt = flow.Gq['channelTop']
+        self.Gb = flow.Gq['channelBot']
+
         # Galerkin discretization
+        # Note:
         for i in range(0, esize):
-            gi = beam.eigen.vectors[i]
-            self.Tt[i] = si.simps(flow.Tf()['channelTop'] * gi, beam.mesh().x)
-            self.Tb[i] = si.simps(flow.Tf()['channelBot'] * gi, beam.mesh().x)  # Changed the sign
-            self.Bt[i] = si.simps(flow.Bq()['channelTop'] * gi, beam.mesh().x)
-            self.Bb[i] = si.simps(flow.Bq()['channelBot'] * gi, beam.mesh().x)
-            self.Dt[i] = si.simps(flow.Dq()['channelTop'] * gi, beam.mesh().x)
-            self.Db[i] = si.simps(flow.Dq()['channelBot'] * gi, beam.mesh().x)
-            self.Et[i] = si.simps(flow.Eq()['channelTop'] * gi, beam.mesh().x)
-            self.Eb[i] = si.simps(flow.Eq()['channelBot'] * gi, beam.mesh().x)
+            gi = solid.eigen.vectors[i]
+            self.Tt[i] = si.simps(flow.Tf['channelTop'] * gi, solid.mesh().x)  # Dim = n x 1
+            self.Tb[i] = si.simps(flow.Tf['channelBot'] * gi, solid.mesh().x)  # Changed the sign # Dim = n x 1
+            self.Bt[i] = si.simps(flow.Bq['channelTop'] * gi, solid.mesh().x)  # Dim = 1 x n
+            self.Bb[i] = si.simps(flow.Bq['channelBot'] * gi, solid.mesh().x)  # Dim = 1 x n
+            self.Dt[i] = si.simps(flow.Dq['channelTop'] * gi, solid.mesh().x)  # Dim = 1 x n
+            self.Db[i] = si.simps(flow.Dq['channelBot'] * gi, solid.mesh().x)  # Dim = 1 x n
+            self.Et[i] = si.simps(flow.Eq['channelTop'] * gi, solid.mesh().x)  # Dim = 1 x n
+            self.Eb[i] = si.simps(flow.Eq['channelBot'] * gi, solid.mesh().x)  # Dim = 1 x n
 
-        # System  Matrix
+        # Mass products
         Mi = np.linalg.inv(self.M)
+        MiDotC = np.dot(Mi, self.C)
+        MiDotK = np.dot(Mi, self.K)
+        MiDotTb = np.dot(Mi, self.Tb)
+        MiDotTt = np.dot(Mi, self.Tt)
 
+        # System matrix
         self.S[0:esize, esize:2*esize] = np.identity(esize)
-        self.S[esize:2*esize, 0:esize] = np.dot(Mi, self.K)
-        self.S[esize:2*esize, esize:2*esize] = np.dot(Mi, self.C)
-        self.S[esize:2*esize, 2*esize] = np.dot(Mi, self.Tb)
-        self.S[esize:2*esize, 2*esize+1] = -np.dot(Mi, self.Tt)
+        self.S[esize:2*esize, 0:esize] = MiDotK
+        self.S[esize:2*esize, esize:2*esize] = MiDotC
+        self.S[esize:2*esize, 2*esize] = MiDotTb
+        self.S[esize:2*esize, 2*esize+1] = -MiDotTt
 
         # Formulation considering acceleration terms
         if self._control['type'] == "Saravia":
-            MiDotC = np.dot(Mi, self.C)
-            MiDotK = np.dot(Mi, self.K)
-            MiDotTb = np.dot(Mi, self.Tb)
-            MiDotTt = np.dot(Mi, self.Tt)
-
             self.S[2 * esize, 0:esize] = -self.Eb - np.dot(self.Bb, MiDotK)
             self.S[2 * esize, esize:2 * esize] = -self.Db - np.dot(self.Bb, MiDotC)
             self.S[2 * esize, 2 * esize] = self.Gb - np.dot(self.Bb, MiDotTb)
@@ -146,34 +145,12 @@ class lfb1D(fsiBase):
         else:
             sys.exit("ERROR: No type in fsi formulation found...")
 
-    # Calculate eigenvalues and eigenvectors
-    def calculate(self):
-        # Calculate the eigenvalues and eigenvectors
-        # ndof = solid.dict()['solution']['modes'] * 2 + 2
-        evalues, evectors = np.linalg.eig(self.S)
-
-        # Create an eigensystem object
-        self.ES = es.eigenSystem(evalues, evectors, sort=True)
-
     def calcNumbers(self):
         super().calcNumbers()
         self.dimNumbers['Mr'] = massRatio(self)
         self.dimNumbers['Kr'] = stiffnessRatio(self)
         self.dimNumbers['Gr'] = gapRatio(self)
         self.dimNumbers['Vp'] = viscousParameter(self)
-
-
-    def finish(self):
-        super().finish()
-
-    def write(self, solution):
-        # Write the eigenvalues and eigenvectors of the FSI system
-        realValues = np.real(solution.evalues())
-        imagValues = np.imag(solution.evalues())
-        self.output[0].write(" ".join(map(str, realValues)) + '\n')
-        self.output[1].write(" ".join(map(str, imagValues)) + '\n')
-        self.output[2].write(" ".join(map(str, solution.evectors())) + '\n')
-
 
 
 # Dimensional numbers of this model
@@ -185,13 +162,15 @@ class massRatio(dimensionlessNumber):
         ms = fsi.solid().material()['rho'] * fsi.solid().tRef  # Solid mass
         self.value = ms / mf
 
+
 class stiffnessRatio(dimensionlessNumber):
     def __init__(self, fsi):
         super().__init__()
         self.type = "Kr"
-        kf = fsi.flow().fluid()['rho'] * fsi.flow().qx0**2 * fsi.flow().lRef**3 / fsi.flow().dRef**2
+        kf = fsi.flow().fluid()['rho'] * fsi.flow().Q0**2 * fsi.flow().lRef**3 / fsi.flow().dRef**2
         ks = fsi.solid().material()['E'] * fsi.solid().control()['I']   # Solid mass
         self.value = ks / kf
+
 
 class gapRatio(dimensionlessNumber):
     def __init__(self, fsi):
@@ -199,10 +178,9 @@ class gapRatio(dimensionlessNumber):
         self.type = "Gr"
         self.value = fsi.flow().eRef
 
+
 class viscousParameter(dimensionlessNumber):
     def __init__(self, fsi):
         super().__init__()
         self.type = "Vp"
         self.value = fsi.flow().eRef**2 * fsi.flow().dimNumbers["Re"].value
-
-

@@ -1,8 +1,15 @@
-# pyFSI v0.2.2
+# pyFSI v0.3.0
 
-This is the second version of pyFSI, a code for solving fluid-structure interaction problems.
+This is the first version of pyFSI, a code for solving fluid-structure interaction problems.
 
-Currently we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlinear Leakege Flow and preciceCoupling.
+Currently, we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlinear Leakege Flow and preciceCoupling.
+
+## Change List
+* New boundary conditions for simple supported beams. 
+* Boundary conditions are now specified through tables.
+* Output is selected in the execution dictionary using object specific keywords.
+* Added an object registry and an output database where the file io takes place.
+
 
 ## Dependencies
 * Python 3
@@ -11,15 +18,14 @@ Currently we have three FSI models: Tosi's linear Leakage Flow, Saravia's nonlin
 
 ## Installation
 * Clone the repository to your computer.
-* Edit your .bashrc and change the file limit adding `ulimit -n 2048`
+* Edit your .bashrc and change the file limit adding `ulimit -n 2048`. For parametric analysis, you may need to set this value to an even larger number; for example, for 1000 parametric analysis `ulimit -n 102400` is required.
 
 ## Usage
-
 Create a folder in the cases directory containing the .json input file and an allrun.py which executes the solver. 
 
 For shell interactive mode run `python3 -i allrun.py`. To return to the shell after running: For interactive mode run `python3 allrun.py`
 
-Follow the examples in the case directory. Currently we support three type of analysis: eigenvalue extraction, nonlinear transient and preCICE-Calculix-pyFSI transient. 
+Follow the examples in the case directory. Currently, we support three type of analysis: eigenvalue extraction, nonlinear transient and preCICE-Calculix-pyFSI transient. 
 
 ## Errors
 
@@ -27,7 +33,7 @@ Follow the examples in the case directory. Currently we support three type of an
 This is an error that is often generated during large parametric runs. Somehow even when pyFSI opens the files as a+, a new file is opened. 
 
 #### Solution
-Execute in a shell `ulimit -n 2048, or increase the limits until the errors dissapear. 
+Execute in a shell `ulimit -n 2048, or increase the limits until the errors disappear. 
 
 Note that closing the file after creation is expensive, so it is preferred to let it opened. 
 
@@ -70,7 +76,7 @@ sudo rm ccx_2.16.src.tar.bz2`
 These are the commands to get the adapter and modify the Makefile to point to the right location of Calculix (/opt) instead of home. 
 `cd /opt
 sudo wget https://github.com/precice/calculix-adapter/archive/master.zip 
-sudo unzip master.zip 
+sudo unzip master.zip
 sudo rm master.zip
 cd calculix-adapter-master
 sudo gedit Makefile
@@ -92,5 +98,8 @@ and also rename it to calculix-adapter.
 
 `sudo mv opt/calculix-adapter-master opt/calculix-adapter
 sudo mv opt/calculix-adapter /opt/CalculiX/.`
+
+### Run precice case
+It is often necessary to run the case twice from the same terminal without closing the additional terminal opened by pyFSI. We are now sure which is the problem.
 
 

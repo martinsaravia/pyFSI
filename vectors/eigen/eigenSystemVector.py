@@ -27,6 +27,7 @@ class eigenSystemVector(object):
         self.size = len(values)
         self.values = values  # Eigenvalues
         self.vectors = np.empty(self.size, dtype=object) # Eigenvectors
+        self.normalization = vectors[0].normalization
         self.d1 = np.empty(self.size, dtype=object)  # First derivative
         self.d2 = np.empty(self.size, dtype=object)
         self.d3 = np.empty(self.size, dtype=object)

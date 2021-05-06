@@ -32,6 +32,7 @@ class eigenVector(field):
             obj = np.asarray(nparray).view(cls)
 
         # ----- Public attributes ----- #
+        obj.normalization = normalize
         obj.info = info
 
         edgeOrder = 2

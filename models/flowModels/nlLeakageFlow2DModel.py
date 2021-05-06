@@ -27,13 +27,14 @@ from pyFSI.models.flowModels.flowBase import flowModel
 from pyFSI.models.properties.boundaryLayer import boundaryLayer
 from pyFSI.vectors.eigen.eigenVector import eigenVector
 from pyFSI.models.properties.dimensionlessNumbers import ReynoldsNumber
+from pyFSI.fields.boundary import boundaryConditions
 
 class nlLeakageFlow2D(flowModel, ABC):
     def __repr__(self):
         return 'leakageFlow2DModel '
 
-    def __init__(self, execution, control, mesh, boundary,  name='NN'):
-        super().__init__(execution, control, mesh, boundary)
+    def __init__(self, execution, control, mesh, boundary, time,  name='NN'):
+        super().__init__(execution, control, mesh, boundary, time)
 
         # ----- Public attributes ----- #
         self.dof = 2  # Number of Q equations (1 per region)
@@ -47,17 +48,20 @@ class nlLeakageFlow2D(flowModel, ABC):
         self.Forces = np.zeros((mesh.size*2, 3))  # The 3D Forces
         self.Dp = None  # pOut - pIn
         self.converged = [False] * self.dof
-        # self.eRef = np.zeros(self.dof)
-        # self.bLayer = np.zeros(self.dof)  # Boundary layer
+        # Output variable mapping
+        self.varMap["flowRates"] = "Q0"
+        self.varMap["pressures"] = "px"
+        self.varMap["flowRateSpeeds"] = "dQ0"
+        self.varMap["flowSpeeds"] = "v0"
 
         # ----- Private attributes ----- #
         self._ti = None  # Current time
         self._th = 1  # Thickness of the model
-        self._pIn = None  # Inlet pressure
+        self._pIn = None  # Inlet pressure Object
         self._pOut = None  # Outlet pressure
+        self._zetaIn = None  # Inlet loss factor
+        self._zetaOut = None  # Outlet loss factor
         self._pTol = 1E-4  # Pressure convergence tolerance
-        self._zetaIn = control['bc']['inlet']['zeta']  # Inlet loss factor
-        self._zetaOut = control['bc']['outlet']['zeta']  # Outlet loss factor
         # self._f0 = np.zeros(self.dof)  # Viscous friction factor
         # self._xix = np.zeros(self.dof)  # Nonlinear profile factor
         # self._eta = np.zeros(self.dof)  # Derivative of f(Qx) at qx0
@@ -72,25 +76,30 @@ class nlLeakageFlow2D(flowModel, ABC):
         # Size of the associated eigensystem
         # self._gDof = self.regions[0].eigen().size
 
-        # Output
-        bufferSize = 1
-        self.output = []
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'Q0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'dQ0.out', 'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'p0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'pIn.out', 'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'v0.out',  'a+', buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'time.out', 'a+',buffering=bufferSize))
-        self.output.append(open(self._execution['paths']['fluidPath'] / 'force.out', 'a+', buffering=bufferSize))
-
+        # Initialize the boundary conditions
+        # Pressure BC
+        pBCDict = self._control['bc']['inlet']['p']
+        self._pInBC = getattr(boundaryConditions, pBCDict['type'])(pBCDict)
+        pBCDict = self._control['bc']['outlet']['p']
+        self._pOutBC = getattr(boundaryConditions, pBCDict['type'])(pBCDict)
+        # Loss factor BC
+        zetaBCDict = self._control['bc']['inlet']['zeta']
+        self._zetaInBC = getattr(boundaryConditions, zetaBCDict['type'])(zetaBCDict)
+        zetaBCDict = self._control['bc']['outlet']['zeta']
+        self._zetaOutBC = getattr(boundaryConditions, zetaBCDict['type'])(zetaBCDict)
 
     # Flow rate equation initial condition
     def setInitialConditions(self):
         print("---> Starting Q0 iteration with initial Q0 = ", self.Q0)
-        # Initialize the pressure difference
-        self._pOut = self._control['bc']['outlet']['p']
-        self._pIn = self._control['bc']['inlet']['p'][0]
+
+        # Initialize the boundary conditons
+        self._pOut = self._pOutBC.getValue(0)
+        self._pIn = self._pInBC.getValue(0)
         self.Dp = self._pOut - self._pIn
+        self._zetaOut = self._zetaOutBC.getValue(0)
+        self._zetaIn = self._zetaInBC.getValue(0)
+
+        # Initialize the flow rate
         L = -1
         convergence = [False, False]
         Qtol = 1E-10
@@ -125,27 +134,26 @@ class nlLeakageFlow2D(flowModel, ABC):
 
     def update(self,  time, state):
         self._ti = time
-        self.Q0 = state # Update the flow rate
+        # Update the flow rate and the dimensionless numbers
+        self.Q0 = state  # Update the flow rate
         self.constants()
+        # Update the pressure and loss factor boundary conditions
+        self._pIn = self._pInBC.getValue(time)
+        self._pOut = self._pOutBC.getValue(time)
+        self.Dp = self._pOut - self._pIn
+        self._zetaIn = self._zetaInBC.getValue(time)
+        self._zetaOut = self._zetaOutBC.getValue(time)
         # Update the regions and the operators
         for i, region in enumerate(self.regions):
             self.Q[i] = self.Q0[i] - region.data['dsi']
             self.v0[i] = self.Q0[i] / region.data['s'][0]
 
     def updateForces(self, time):
-        # Update the boundary conditions
-        if self._control['bc']['type'] == "variableInletPressure":
-            pDict = self._control['bc']
-            tpf = ((time - self._execution['time']['startTime']) /
-                   (self._execution['time']['endTime'] - self._execution['time']['startTime']))
-            self._pIn = pDict['inlet']['p'][0] + tpf * (pDict['inlet']['p'][-1] - pDict['inlet']['p'][0])
-
-            self._pOut = pDict['outlet']['p']
-            self.Dp = self._pOut - self._pIn
-
         # Force calculation for Calculix coupling
+        force = np.zeros(1, dtype=object)
+        force = -(self.px[0] - self.px[1])
         # Integrate the pressure to obtain the force on every node
-        F_half = 0.5 * si.cumtrapz(self.F(), self._mesh.x, initial=0.0)
+        F_half = 0.5 * si.cumtrapz(force, self._mesh.x, initial=0.0)
         self.Forces[0:self._mesh.size, 1] = F_half
         self.Forces[self._mesh.size:self._mesh.size*2, 1] = F_half
 
@@ -153,7 +161,7 @@ class nlLeakageFlow2D(flowModel, ABC):
     def rhs(self, time, state):
         rhs = np.zeros(self.dof)
         L = -1  # Index of the end of the channel
-        self.update(None, state)
+        self.update(time, state)
         # Assemble the rhs of each region
         deltaPx = np.zeros(1, dtype=object) # Pressure difference between the regions
         for i, region in enumerate(self.regions):
@@ -165,7 +173,7 @@ class nlLeakageFlow2D(flowModel, ABC):
                       + self._zetaOut * (self.Q[i][L] / s[L]) ** 2)
 
             Wcv = (self.Wc(i, self.Q[i]**2, region)
-                  + self.Wv(i, self.Q[i]**2, region))
+                   + self.Wv(i, self.Q[i]**2, region))
 
             t4 = - self.Wt(i, region.data['ddsi'], region)[L]  # Old value of acceleration
 
@@ -191,18 +199,6 @@ class nlLeakageFlow2D(flowModel, ABC):
 
         return rhs
 
-    # Fluid pressure difference force
-    def F(self):
-        F = np.zeros(1, dtype=object)
-        # for i, region in enumerate(self.regions):
-        #     if region.type == 'top':
-        #         sign = -1
-        #     else:
-        #         sign =  1
-        #     F[0] += sign * self.px[i]
-        F = -(self.px[0] - self.px[1])
-        return F
-
     # ----- Flow Operators ----- #
     # Transient Operator
     def Wt(self, i, fx, region):
@@ -224,23 +220,9 @@ class nlLeakageFlow2D(flowModel, ABC):
         Wv = 0.25 * self.f0[i] * si.cumtrapz(fx / size**3, self._mesh.x, initial=0)
         return Wv
 
-    # Write files
-    def write(self):
-        self.output[0].write(" ".join(map(str, self.Q0)) + '\n')
-        self.output[1].write(" ".join(map(str, self.dQ0)) + '\n')
-        # self.output[2].write(" ".join(map(str, self.px[0])) + '\n')
-        # self.output[3].write(" ".join(map(str, self.px[1])) + '\n')
-        self.output[2].write(" ".join(map(str, [self.px[0][0], self.px[1][0]])) + '\n')
-        self.output[3].write(str(self._pIn) + '\n')
-        self.output[4].write(" ".join(map(str, self.v0)) + '\n')
-        self.output[5].write(str(self._ti) + '\n')
-        # force0 = si.simps(-self.px[0] , self._mesh.x)
-        # force1 = si.simps(self.px[1], self._mesh.x)
-        # force = si.simps(-self.px[0] + self.px[1], self._mesh.x)
-        # self.output[6].write(str(force) + '\n')
-
     # Calculate some constants
     def constants(self):
+        self.calcNumbers()
         for i, region in enumerate(self.regions):
             self.dRef[i] = region.data['s'][0]  # Reference channel size
             self.eRef[i] = self.dRef[i] / self.lRef
@@ -259,3 +241,6 @@ class nlLeakageFlow2D(flowModel, ABC):
                 self.f0[i] = 0.26 * self.Rd[i].value ** -0.24
                 self.xix[i] = 1.0
                 # self.eta = -(0.0624 * self.Rd.value ** -0.24) / Q0
+
+    def calcNumbers(self):
+        super().calcNumbers()

@@ -1,41 +1,46 @@
-# --------------------------------------------------------------------------- #
-#    p    #     version: 0.1
-#    y    #     date: 02/07/2020
-#    F    #     author: Martin Saravia
-#    S    #     description: Flow model interface
-#    I    #
-# --------------------------------------------------------------------------- #
-# Notes:
-#   This class generates a region from two 1D boundary objects
-#   Only one boundary can be flexible
-#
-# --------------------------------------------------------------------------- #
+"""@package docstring
+Base class for the fluid models
+
+Only one boundary can be flexible
+"""
+
 from abc import ABCMeta, abstractmethod
 from pyFSI.models.properties.materialProperties import fluids as db
-from pyFSI.models.properties.dimensionlessNumbers import makeDimensionlessNumbers
+from pyFSI.models.properties.dimensionlessNumbers import *
 from pyFSI.mesh.region.fsiRegion1D import fsiRegion1D
-# Base class for the fluid models
+
 
 class flowModel(metaclass=ABCMeta):
+    """ Base class for the flow models"""
     def __repr__(self):
         return 'fluidModel Abstract Class'
 
-    def __init__(self, execution, control, mesh, boundary):
+    def __init__(self, execution, control, mesh, boundary, time):
+        """Constructor"""
+
         # ----- Public attribues ----- #
+        self.base = "flow"
+        self.name = control['name']
         self.dof = None  # Number of DOF of the model
         self.regions = []  # Regions comprising the domain
         self.vRef = None  # Reference velocity
         self.lRef = None  # Reference length
         self.dRef = None  # Reference inlet size
-        self.dimNumbers = None
         self.output = []
+        self.path = execution['paths']['flowPath']  # Associated path
+        self.dimNumbers = {}  # Dimensionless numbers
+        self.varMap = {
+            "numbers":      "dimNumbers"
+        }
 
         # ----- Private attributes ----- #
         self._execution = execution
         self._control = control
         self._mesh = mesh
         self._boundary = boundary
+        self._updated = False
         self._fluid = None
+        self._time = time
         if execution['debug'] == 'yes':
             self._debug = True
         else:
@@ -53,7 +58,10 @@ class flowModel(metaclass=ABCMeta):
 
     # Calculate the dimensionless numbers
     def calcNumbers(self):
-        self.dimNumbers = makeDimensionlessNumbers(flow=self)
+        """ Calculates dimensionless numbers"""
+        self.dimNumbers["Re"] = ReynoldsNumber(self)
+        self.dimNumbers["Rd"] = ReynoldsNumber(self, type="Rd")
+        self.dimNumbers["Fr"] = FroudeNumber(self)
 
     # Pure virtual methods
 
@@ -79,4 +87,13 @@ class flowModel(metaclass=ABCMeta):
 
     def finish(self):
         self.closeOutput()
+
+    def updated(self):
+        return self._updated
+
+    def time(self):
+        return self._time
+
+
+
 

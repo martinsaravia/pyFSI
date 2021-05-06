@@ -15,10 +15,13 @@ from abc import ABCMeta, abstractmethod
 # 1D Mesh creation.  We can use different creation methods (@classmethod)
 
 class fsiMesh1D(object):
-    def __init__(self, iDict, name='None', x=None):
+    def __init__(self, iDict, x=None):
 
         # ----- Public attributes ----- #
-        self.name = name
+        if 'name' in iDict:
+            self.name = iDict['name']
+        else:
+            self.name = None
         self.x = x  # Mesh coordinates
         self.size = len(self.x)  # number of sampling points
         self.L = self.x[-1] - self.x[0]  # Length of the 1D domain

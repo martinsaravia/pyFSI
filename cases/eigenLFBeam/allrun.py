@@ -1,15 +1,24 @@
-# Run the case
-import os
-from pyFSI.execution.caseManagement import *
+from pyFSI.execution.case import *
+from pyFSI.post.prints import *
+import sys
 
-# Define case name and location
+# Define case name
 caseName = "eigenLFBeam"
 
+# Create a log file
+sys.stdout = io.Logger()
 
-# Clean and run
-cleanCase(caseName)
-case = runCase(caseName)
+# Create the case object
+case = MFSICase(caseName)
+
+# Solve the case
+case.solve()
 
 # Run the plots file
-#os.system("python3 plots.py 1")
-exec(open("plots.py").read()) # Equivalent
+exec(open("plots.py").read())
+
+# Print some data
+printArray(case.MFSI.K, "FSI Stiffness Matrix")
+printNumbers(case.MFSI)
+
+

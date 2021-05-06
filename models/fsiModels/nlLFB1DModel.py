@@ -25,8 +25,8 @@ class nlLFB1D(fsiBase):
     def __repr__(self):
         return 'nlLFB1D '
 
-    def __init__(self, execution, control, solid, flow):
-        super().__init__(execution, control, solid, flow)
+    def __init__(self, execution, control, solid, flow, time):
+        super().__init__(execution, control, solid, flow, time)
 
         # ----- Public attributes ----- #
         self.dof = 2 * solid.dof + flow.dof  # DOFs of the FSI system
@@ -91,8 +91,6 @@ class nlLFB1D(fsiBase):
                                        solid.addedStateModalForce(flow.deltaPx[0]))
         return self.rhs[self._i0:self._i2]
 
-    # def residual(self):
-    #     res = self._solid.F() + self._flow.F() - self.solid.
 
     def calcNumbers(self):
         super().calcNumbers()
@@ -100,13 +98,6 @@ class nlLFB1D(fsiBase):
         self.dimNumbers['Kr'] = stiffnessRatio(self)
         self.dimNumbers['Gr'] = gapRatio(self)
         self.dimNumbers['Vp'] = viscousParameter(self)
-
-    def write(self):
-        self._solid.write()
-        self._flow.write()
-
-    def finish(self):
-        super().finish()
 
 
 # Dimensional numbers of this model

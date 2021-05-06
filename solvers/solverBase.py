@@ -13,32 +13,30 @@ from pyFSI.mesh.fsiMesh1D import fsiMesh1D
 
 
 class solverBase:
-    def __init__(self, fsi):
-        # Public Attributes
-        self.fsi = fsi
-        self.time = None
-        self.control = fsi.execution()['solver']
+    def __init__(self, fsi, odb):
+        # Private Attributes
+        self._fsi = fsi
+        self._odb = odb
+        self._time = fsi.time()
         self._execution = fsi.execution()
 
-    # Execute final tasks for the fsi objects
-    def finish(self):
-        self.fsi.finish()
+        # Public Attributes
+        self.control = fsi.execution()['solver']
+
+        # Output
+        bufferSize = 1
+        self.output = []
+        self.output.append(open(self._execution['paths']['fsiPath'] / 'time.out', 'a+', buffering=bufferSize))
 
     # Abstract methods
     @abstractmethod
     def solve(self):
         pass
 
-    @abstractmethod
-    def advance(self, tspan):
-        pass
-
-    # Write the output of every object
-    @abstractmethod
-    def write(self):
-        pass
-
     # Getters
     def execution(self):
         return self._execution
+
+    def odb(self):
+        return self._odb
 

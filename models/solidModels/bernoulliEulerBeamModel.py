@@ -31,14 +31,17 @@ class bernoulliEulerBeam(solidModel):
     def __repr__(self):
         return 'beamModel'
 
-    def __init__(self, execution, control, mesh, name='beam'):
-        super().__init__(execution, control, mesh, name)  # Call the base class
+    def __init__(self, execution, control, mesh, time):
+        super().__init__(execution, control, mesh, time)  # Call the base class
 
         # ----- Public attributes ----- #
         self.dof = control['solution']['modes']  # Modal DOFs
-        self.K = np.zeros((self.dof, self.dof))
-        self.C = np.zeros((self.dof, self.dof))
-        self.M = np.zeros((self.dof, self.dof))
+        self.m = None  # Mass vector
+        self.k = None  # Stiffness vector
+        self.c = None  # Damping vector
+        self.K = np.zeros((self.dof, self.dof))  # Mass Matrix
+        self.C = np.zeros((self.dof, self.dof))  # Stiffness Matrix
+        self.M = np.zeros((self.dof, self.dof))  # Damping Matrix
         self.Minv = np.zeros((self.dof, self.dof))
         self.sof = 2 * self.dof
         self.S = np.zeros((self.sof, self.sof)) # State Matrix
@@ -52,24 +55,34 @@ class bernoulliEulerBeam(solidModel):
         self.y = {}   # Current position of top, bot and mid surfaces
         self.dy = {}  # Current velocity of top, bot and mid surfaces
         self.ddy = {}  # Current accelerations of top, bot and mid surfaces
-        # Eigensystem
-        self.eigen = None
+        self.eigen = None  # Eigensystem
         # Dimensional analysis
         self.lRef = None  # Reference length
         self.tRef = None  # Reference thickness
         self.uRef = None  # Reference something
         self.vRef = None  # Reference velocity
+        # Output variable mapping
+        self.varMap["naturalFrequencies"] = "eigen.values"
+        self.varMap["displacements"] = "y['mid']"
+        self.varMap["velocities"] = "dy['mid']"
+        self.varMap["accelerations"] = "ddy['mid']"
+        self.varMap["numbers"] = "dimNumbers"
 
         # ----- Private attributes ----- #
-        self._mesh = mesh
+        # Flags
+        self._updated = False
+        # Messages
+        if self._debug:
+            print("     WARNING: Beam initial conditions set to zero. ")
 
         # ----- Procedures ----- #
         self._initialize(control)
 
-        self._stateSystem()
+        self._stateMatrixSystem()  # Calculate the state matrix S
+
+        self._stateVectorSystem()  # Calculate vectors k, m, c and F
 
         self.setInitialConditions()
-
 
     # Set the initial conditions
     def setInitialConditions(self):
@@ -78,7 +91,6 @@ class bernoulliEulerBeam(solidModel):
                     np.zeros(self.dof),
                     np.zeros(self.dof))
 
-    # ----- Public methods ----- #
     # Update the geometry
     def update(self, a, da, dda):
         self.a = a  # State variables
@@ -93,8 +105,17 @@ class bernoulliEulerBeam(solidModel):
         # Update the accelerations
         self.ddy['mid'] = self.eigen.reconstruct(self.dda)
 
-    # Build the state matrix
-    def _stateSystem(self):
+        self._updated = True
+
+    # Build the dynamic vectors
+    def _stateVectorSystem(self):
+        self.m = self._m()  # Mass vector
+        self.k = self._k()  # Stiffness vector
+        self.c = self._c()  # Damping vector
+        self.f = self._f()  # Load vector
+
+    # Build the state matrices and vectors
+    def _stateMatrixSystem(self):
         # State matrix assumming mass normalized eigenvectors
         dof = self.dof
         sof = self.sof
@@ -121,7 +142,6 @@ class bernoulliEulerBeam(solidModel):
         else:
             self.C[0, 0] = 2 * self._control['solution']['damping'][0] * self.eigen.values[0]
 
-
         # Assemble the modal force
         f = np.zeros(dof)
         for i in range(dof):
@@ -133,38 +153,32 @@ class bernoulliEulerBeam(solidModel):
         self.S[dof:sof, 0:dof] = -np.dot(self.Minv, self.K)
         self.S[dof:sof, dof:sof] = -np.dot(self.Minv, self.C)
 
-
     # Add a fluid force
     def addedStateModalForce(self, force):
         F = np.zeros(self.sof)
         f = np.zeros(self.dof)
-        mode = self.eigen.vectors
+        modes = self.eigen.vectors
         for i in range(self.dof):
-            # plt.plot(force)
-            # plt.figure()
-            # plt.plot(force  * mode[i])
-            # plt.show()
-            f[i] = si.simps(force * mode[i], self._mesh.x)
+            f[i] = si.simps(force * modes[i], self._mesh.x)
         F[self.dof:self.sof] = np.dot(self.Minv, f)
-
         return F
 
-    def m(self):  # Mass vector
+    def _m(self):  # Mass vector
         m = self._control['m'] * self.eigen.vectors
         return m
 
-    def c(self):  # Damping vector
+    def _c(self):  # Damping vector
         c = np.empty(len(self.eigen.values), dtype=object)
         for i, val in enumerate(c):
             c[i] = self._control['m'] * (self._control['solution']['damping'][0] *
                                          self.eigen.values[i] * self.eigen.vectors[i])
         return c
 
-    def k(self):  # Stiffness vector
+    def _k(self):  # Stiffness vector
         k = self._control['material']['E'] * self._control['I'] * self.eigen.d4
         return k
 
-    def f(self):  # body load
+    def _f(self):  # body load
         # F = self._control['w'] * np.ones(len(self.eigen.vectors[0]))
         f = np.zeros(1, dtype=object)
         f[0] = self._control['w'] * np.ones(len(self.eigen.vectors[0]))
@@ -202,7 +216,6 @@ class bernoulliEulerBeam(solidModel):
             print("--> ERROR: Beam solution type " + control['solution'][
                 'type'] + " not kwnown !")
 
-
         # Fill the reference parameters
         self.lRef = control['L']
         self.tRef = control['section']['h']
@@ -214,20 +227,6 @@ class bernoulliEulerBeam(solidModel):
         # Calculate the dimensionless numbers
         self.calcNumbers()
 
-        # Initialize the output files
-        self.output.append(open(self._execution['paths']['solidPath'] / 'yTop.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'yMid.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'yBot.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'dyMid.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'ddyMid.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'a.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'da.out', 'a+'))
-        self.output.append(open(self._execution['paths']['solidPath'] / 'dda.out', 'a+'))
-
-        # Save the mesh
-        self.output.append(open(self._execution['paths']['solidPath'] / 'x.out', 'a+'))
-        self.output[8].write(" ".join(map(str, self._mesh.x)) + '\n')
-        self.output[8].close()
 
         # Initial conditions
         # y0 = np.zeros(len(self._mesh.x))  # Initial position
@@ -254,6 +253,16 @@ class bernoulliEulerBeam(solidModel):
                         (np.sinh(b * L) - np.sin(b * L)) / (np.cosh(b * L) + np.cos(b * L))) * (
                          np.sinh(b * x) - np.sin(b * x))
 
+        elif pars['bc']['type'] == "simpleSupport":
+            betaL = np.array([3.141592653589793, 6.283185307179586, 9.42477796076938, 12.566370614359172, 15.707963267948966, 18.84955592153876])
+            beta = betaL / L
+            vector = lambda x, b: np.sin(b * x)
+
+        elif pars['bc']['type'] == "clampedSimple":
+            betaL = np.array([3.9265975952148438, 7.068580627441406, 10.210182189941406, 13.351768493652344, 14.137166976928711, 16.49335479736328])
+            beta = betaL / L
+            vector = lambda x, b: (np.cos(b * x) - np.cosh(b * x))-((np.cos(b * L)-np.cosh(b * L))/(np.sin(b * L)-np.sinh(b * L))) * (np.sin(b * L)-np.sinh(b * L))
+
         # Fill the eigensystem
         values = []
         vectors = []
@@ -267,12 +276,9 @@ class bernoulliEulerBeam(solidModel):
             # Choose the normalization method, No is for stiffness based on the
             # fourth derivative of the mode, mass is for k based on the eigenvalue
             if 'normalize' in self._control['solution']:
-                if self._control['solution']['normalize'] == "mass":
-                    print("--> Choosing mass normalization for the beam...")
-                    normMethod = "mass"
-                else:
-                    if self._debug:
-                        print("----> Beam normalization method unknown. Choosing False...")
+                normMethod = self._control['solution']['normalize']
+                print("--> Choosing ", normMethod, "normalization for the beam...")
+                if normMethod == 'no':
                     normMethod = False
             else:
                 normMethod = False
@@ -296,6 +302,7 @@ class bernoulliEulerBeam(solidModel):
     def _setBC(self, type, eigenSystem):
         mesh = self._mesh
         es = self.eigen
+        # Choose the boundary condition
         if type == "clampedFree":
             # Create the interpolate object
             for i in range(es.size):
@@ -315,15 +322,41 @@ class bernoulliEulerBeam(solidModel):
                 es.setD4(range(0, 4), i, itpobj(mesh.x[0:4]))
                 es.setD4(range(-4, 0), i, itpobj(mesh.x[-4:]))
 
-    def write(self):
-        self.output[0].write(" ".join(map(str, self.y['top'])) + '\n')
-        self.output[1].write(" ".join(map(str, self.y['mid'])) + '\n')
-        self.output[2].write(" ".join(map(str, self.y['bot'])) + '\n')
-        self.output[3].write(" ".join(map(str, self.dy['mid'])) + '\n')
-        self.output[4].write(" ".join(map(str, self.ddy['mid'])) + '\n')
-        self.output[5].write(" ".join(map(str, self.a)) + '\n')
-        self.output[6].write(" ".join(map(str, self.da)) + '\n')
-        self.output[7].write(" ".join(map(str, self.dda)) + '\n')
+        elif type == "simpleSupport":
+            for i in range(es.size):
+                es.setV(0, i, 0.0)
+                es.setD2(0, i, 0.0)
+                es.setV(-1, i, 0.0)
+                es.setD2(-1, i, 0.0)
+                # Correct the third derivative
+                itpobj = interpolate.interp1d(mesh.x[3:],
+                                              es.d3[i][3:],
+                                              fill_value='extrapolate')
+                es.setD3(range(0, 3), i, itpobj(mesh.x[0:3]))
+                # Correct the fourth derivative
+                itpobj = interpolate.interp1d(mesh.x[4:-4],
+                                              es.d4[i][4:-4],
+                                              fill_value='extrapolate')
+                es.setD4(range(0, 4), i, itpobj(mesh.x[0:4]))
+                es.setD4(range(-4, 0), i, itpobj(mesh.x[-4:]))
+
+        elif type == "clampedSimple":
+            for i in range(es.size):
+                es.setV(0, i, 0.0)
+                es.setD1(0, i, 0.0)
+                es.setV(-1, i, 0.0)
+                es.setD2(-1, i, 0.0)
+                # Correct the third derivative
+                itpobj = interpolate.interp1d(mesh.x[3:],
+                                              es.d3[i][3:],
+                                              fill_value='extrapolate')
+                es.setD3(range(0, 3), i, itpobj(mesh.x[0:3]))
+                # Correct the fourth derivative
+                itpobj = interpolate.interp1d(mesh.x[4:-4],
+                                              es.d4[i][4:-4],
+                                              fill_value='extrapolate')
+                es.setD4(range(0, 4), i, itpobj(mesh.x[0:4]))
+                es.setD4(range(-4, 0), i, itpobj(mesh.x[-4:]))
 
     # Getters
     def freqs(self):

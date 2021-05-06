@@ -44,11 +44,13 @@ class eigenSystem(object):
 
     # Getter for the eigenvelues (gives them as a list)
     def evalues(self):
-        return [es['eval'] for es in self._eigen]
+        evalues = [es['eval'] for es in self._eigen]
+        return evalues
 
     # Getter for the eigenvectors (gives them as a list)
     def evectors(self):
-        return [es['evec'] for es in self._eigen]
+        evectors = [es['evec'] for es in self._eigen]
+        return evectors
     
     def size(self):
         return len(self._eigen)
